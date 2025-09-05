@@ -40,6 +40,9 @@ export default function ResultsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
     null
   );
+  const [showDeleteEntryConfirm, setShowDeleteEntryConfirm] = useState<
+    string | null
+  >(null);
   const itemsPerPage = 12;
 
   useEffect(() => {
@@ -127,6 +130,35 @@ export default function ResultsPage() {
     } finally {
       setDeletingId(null);
       setShowDeleteConfirm(null);
+    }
+  };
+
+  const handleDeleteEntry = async (recordId: string) => {
+    setDeletingId(recordId);
+    try {
+      const response = await fetch('/api/delete-entry', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ recordId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh the records
+        await fetchRecords();
+        alert('Eintrag erfolgreich gelöscht');
+      } else {
+        alert(`Fehler beim Löschen: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      alert('Fehler beim Löschen des Eintrags');
+    } finally {
+      setDeletingId(null);
+      setShowDeleteEntryConfirm(null);
     }
   };
 
@@ -261,17 +293,22 @@ export default function ResultsPage() {
         <div className='flex flex-col gap-4 mb-6'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
             <div className='flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4'>
-              <Link href='/'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='transition-all duration-200 hover:scale-105 w-fit'
-                >
-                  <ArrowLeft className='h-4 w-4 mr-2' />
-                  <span className='hidden xs:inline'>Zurück zum Logger</span>
-                  <span className='xs:hidden'>Zurück</span>
-                </Button>
-              </Link>
+              <div className='flex justify-between gap-3'>
+                <Link href='/'>
+                  <Button
+                    variant='outline'
+                    size='lg'
+                    className='transition-all duration-200 hover:scale-105 w-fit'
+                  >
+                    <ArrowLeft className='h-4 w-4 mr-2' />
+                    <span className='hidden xs:inline'>Zurück zum Logger</span>
+                    <span className='xs:hidden'>Zurück</span>
+                  </Button>
+                </Link>
+                <div className='flex justify-end'>
+                  <ThemeToggle />
+                </div>
+              </div>
               <div className='min-w-0 flex-1'>
                 <h1 className='text-xl sm:text-2xl font-bold truncate'>
                   Temperaturaufzeichnungen
@@ -281,9 +318,6 @@ export default function ResultsPage() {
                   {imagesWithScreenshots.length} mit Screenshots
                 </p>
               </div>
-            </div>
-            <div className='flex justify-end'>
-              <ThemeToggle />
             </div>
           </div>
 
@@ -418,17 +452,26 @@ export default function ResultsPage() {
                 return (
                   <Card key={record.id} className='overflow-hidden'>
                     <CardHeader className='pb-2 sm:pb-3 px-4 sm:px-6'>
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-center gap-1 text-sm sm:text-base text-muted-foreground'>
+                          <Calendar className='h-3 w-3 flex-shrink-0' />
+                          <span className='truncate'>
+                            {record.date} {record.time}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setShowDeleteEntryConfirm(record.id)}
+                          className='text-muted-foreground hover:text-destructive transition-colors p-1 hover:bg-destructive/10 rounded'
+                          title='Eintrag löschen'
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </button>
+                      </div>
                       <div className='flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-0'>
                         <div className='flex items-center gap-2'>
                           <Thermometer className='h-4 w-4 text-primary flex-shrink-0' />
                           <span className='font-semibold text-lg sm:text-xl'>
                             {record.temperature}°C
-                          </span>
-                        </div>
-                        <div className='flex items-center gap-1 text-xs sm:text-sm text-muted-foreground'>
-                          <Calendar className='h-3 w-3 flex-shrink-0' />
-                          <span className='truncate'>
-                            {record.date} {record.time}
                           </span>
                         </div>
                       </div>
@@ -448,7 +491,7 @@ export default function ResultsPage() {
                           <div className='absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center'>
                             <ImageIcon className='h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity' />
                           </div>
-                          <div className='absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs'>
+                          <div className='absolute bottom-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs backdrop-blur-sm'>
                             {record.time}
                           </div>
                           {/* Delete Button */}
@@ -464,10 +507,10 @@ export default function ResultsPage() {
                           </button>
                         </div>
                       ) : (
-                        <div className='aspect-square bg-muted rounded-lg flex items-center justify-center'>
+                        <div className='aspect-square_ bg-muted rounded-lg flex items-center justify-center'>
                           <div className='text-center text-muted-foreground'>
-                            <ImageIcon className='h-6 w-6 mx-auto mb-1' />
-                            <span className='text-xs'>Kein Screenshot</span>
+                            {/* <ImageIcon className='h-6 w-6 mx-auto mb-1' />
+                            <span className='text-xs'>Kein Screenshot</span> */}
                           </div>
                         </div>
                       )}
@@ -552,7 +595,7 @@ export default function ResultsPage() {
 
         {/* Slideshow Modal */}
         {selectedImageIndex !== null && currentImageRecord?.screenshotUrl && (
-          <div className='fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4'>
+          <div className='fixed inset-0 bg-black/80 dark:bg-black/90 z-50 flex items-center justify-center p-4'>
             <div className='relative max-w-4xl max-h-full'>
               {/* Close Button */}
               <button
@@ -589,7 +632,7 @@ export default function ResultsPage() {
               )}
 
               {/* Main Image */}
-              <div className='relative'>
+              <div className='relative bg-white dark:bg-gray-900 rounded-lg p-4'>
                 <Image
                   src={currentImageRecord.screenshotUrl}
                   alt={`Screenshot for ${currentImageRecord.temperature}°C`}
@@ -630,15 +673,15 @@ export default function ResultsPage() {
 
         {/* Delete Confirmation Dialog */}
         {showDeleteConfirm && (
-          <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'>
-            <div className='bg-background border rounded-lg shadow-lg max-w-sm sm:max-w-md w-full mx-4'>
+          <div className='fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4'>
+            <div className='bg-card border border-border rounded-lg shadow-xl max-w-sm sm:max-w-md w-full mx-4'>
               <div className='p-4 sm:p-6'>
                 <div className='flex items-start gap-3 mb-4'>
                   <div className='flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center'>
                     <AlertTriangle className='h-5 w-5 text-red-600 dark:text-red-400' />
                   </div>
                   <div className='min-w-0 flex-1'>
-                    <h3 className='text-base sm:text-lg font-semibold'>
+                    <h3 className='text-base sm:text-lg font-semibold text-card-foreground'>
                       Screenshot löschen?
                     </h3>
                     <p className='text-sm text-muted-foreground mt-1'>
@@ -664,6 +707,57 @@ export default function ResultsPage() {
                     className='w-full sm:w-auto sm:min-w-[100px]'
                   >
                     {deletingId === showDeleteConfirm ? (
+                      <>
+                        <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
+                        Löschen...
+                      </>
+                    ) : (
+                      'Löschen'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Entry Confirmation Dialog */}
+        {showDeleteEntryConfirm && (
+          <div className='fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4'>
+            <div className='bg-card border border-border rounded-lg shadow-xl max-w-sm sm:max-w-md w-full mx-4'>
+              <div className='p-4 sm:p-6'>
+                <div className='flex items-start gap-3 mb-4'>
+                  <div className='flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center'>
+                    <AlertTriangle className='h-5 w-5 text-red-600 dark:text-red-400' />
+                  </div>
+                  <div className='min-w-0 flex-1'>
+                    <h3 className='text-base sm:text-lg font-semibold text-card-foreground'>
+                      Eintrag löschen?
+                    </h3>
+                    <p className='text-sm text-muted-foreground mt-1'>
+                      Diese Aktion kann nicht rückgängig gemacht werden. Der
+                      gesamte Eintrag und alle zugehörigen Daten werden
+                      dauerhaft gelöscht.
+                    </p>
+                  </div>
+                </div>
+
+                <div className='flex flex-col-reverse sm:flex-row gap-3 sm:justify-end'>
+                  <Button
+                    variant='outline'
+                    onClick={() => setShowDeleteEntryConfirm(null)}
+                    disabled={deletingId !== null}
+                    className='w-full sm:w-auto'
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    onClick={() => handleDeleteEntry(showDeleteEntryConfirm)}
+                    disabled={deletingId !== null}
+                    className='w-full sm:w-auto sm:min-w-[100px]'
+                  >
+                    {deletingId === showDeleteEntryConfirm ? (
                       <>
                         <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
                         Löschen...

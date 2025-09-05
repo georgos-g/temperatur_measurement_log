@@ -19,7 +19,7 @@ Eine mobile-optimierte Next.js-Anwendung zur Aufzeichnung von Temperaturmessunge
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Database**: Vercel Postgres
 - **Styling**: TailwindCSS v4
@@ -51,6 +51,8 @@ cd temperatur_measurement_log
 
 ```bash
 yarn install
+# or
+npm install
 ```
 
 3. Set up Vercel Postgres:

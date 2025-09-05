@@ -1,18 +1,11 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/lib/theme-context';
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function ThemeToggle() {
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -21,52 +14,82 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant='ghost' size='icon' className='relative h-9 w-9' disabled>
-        <Sun className='h-[1.2rem] w-[1.2rem]' />
-        <span className='sr-only'>Thema umschalten</span>
-      </Button>
+      <div className='flex items-center gap-3'>
+        {/* <span className='text-sm font-medium text-gray-500'>Light</span> */}
+        <div className='relative w-16 h-8 bg-gray-300 rounded-full cursor-pointer'>
+          <div className='absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md'></div>
+        </div>
+        {/* <span className='text-sm font-medium text-gray-500'>Dark</span> */}
+      </div>
     );
   }
 
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant='ghost'
-          size='icon'
-          className='relative h-9 w-9 transition-all duration-200 hover:scale-105'
-        >
-          <Sun className='h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0' />
-          <Moon className='absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100' />
-          <span className='sr-only'>Thema umschalten</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align='end'
-        className='animate-in slide-in-from-top-2'
+    <div className='flex items-center gap-3'>
+      {/* <span
+        className={`text-sm font-medium transition-colors duration-200 ${
+          theme === 'light' ? 'text-gray-900 font-semibold' : 'text-gray-500'
+        }`}
       >
-        <DropdownMenuItem
-          onClick={() => setTheme('light')}
-          className='cursor-pointer transition-colors duration-150 hover:bg-accent'
-        >
-          <Sun className='mr-2 h-4 w-4' />
-          <span>Hell</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme('dark')}
-          className='cursor-pointer transition-colors duration-150 hover:bg-accent'
-        >
-          <Moon className='mr-2 h-4 w-4' />
-          <span>Dunkel</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme('system')}
-          className='cursor-pointer transition-colors duration-150 hover:bg-accent'
-        >
-          <span className='mr-2'>💻</span>
-          <span>System</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        Light
+      </span> */}
+
+      <div
+        className='relative w-16 h-8 rounded-full cursor-pointer transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+        onClick={toggleTheme}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleTheme();
+          }
+        }}
+        role='switch'
+        aria-checked={theme === 'dark'}
+        aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+        tabIndex={0}
+        style={{
+          // backgroundColor: theme === 'light' ? '#3b82f6' : '#1f2937',
+          backgroundColor: theme === 'light' ? '#1f2937' : '#1f2937',
+        }}
+      >
+        {/* Toggle knob */}
+        <div
+          className='absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out'
+          style={{
+            transform:
+              theme === 'light' ? 'translateX(4px)' : 'translateX(36px)',
+          }}
+        />
+
+        {/* Light mode: moon on right side */}
+        {theme === 'light' && (
+          <div className='absolute inset-0 flex items-center justify-end pr-2'>
+            <Moon className='w-6 h-6 text-white' />
+          </div>
+        )}
+
+        {/* Dark mode: stars on left side */}
+        {theme === 'dark' && (
+          <div className='absolute inset-0 flex items-center justify-start pl-2'>
+            <div className='flex items-center gap-0.5'>
+              <Sun className='w-1.5 h-1.5 text-yellow-400 fill-yellow-400' />
+              {/* <Sun className='w-1 h-1 text-yellow-300 fill-yellow-300' /> */}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* <span
+        className={`text-sm font-medium transition-colors duration-200 ${
+          theme === 'dark' ? 'text-white font-semibold' : 'text-gray-500'
+        }`}
+      >
+        Dark
+      </span> */}
+    </div>
   );
 }

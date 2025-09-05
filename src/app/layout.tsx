@@ -17,13 +17,6 @@ export const metadata: Metadata = {
   title: 'Temperatur Logger',
   description: 'Mobile-optimierte Temperaturmessungs-App mit Screenshot-Upload',
   manifest: '/manifest.json',
-  themeColor: '#000000',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
