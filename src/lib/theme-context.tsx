@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'dark' | 'light';
+type Theme = 'dark' | 'light' | 'system';
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -22,9 +22,18 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
+const getSystemTheme = (): 'dark' | 'light' => {
+  if (typeof window !== 'undefined') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  }
+  return 'light';
+};
+
 export function ThemeProvider({
   children,
-  defaultTheme = 'light',
+  defaultTheme = 'system',
   storageKey = 'temperature-app-theme',
   ...props
 }: ThemeProviderProps) {
@@ -43,9 +52,26 @@ export function ThemeProvider({
     if (!mounted) return;
 
     const root = window.document.documentElement;
+    const systemTheme = getSystemTheme();
+    const appliedTheme = theme === 'system' ? systemTheme : theme;
 
     root.classList.remove('light', 'dark');
-    root.classList.add(theme);
+    root.classList.add(appliedTheme);
+  }, [theme, mounted]);
+
+  useEffect(() => {
+    if (!mounted || theme !== 'system') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      const root = window.document.documentElement;
+      const systemTheme = getSystemTheme();
+      root.classList.remove('light', 'dark');
+      root.classList.add(systemTheme);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme, mounted]);
 
   const value = {

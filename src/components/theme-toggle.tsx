@@ -1,7 +1,7 @@
 'use client';
 
 import { useTheme } from '@/lib/theme-context';
-import { Moon, Sun } from 'lucide-react';
+import { Monitor, Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function ThemeToggle() {
@@ -25,7 +25,9 @@ export function ThemeToggle() {
   }
 
   const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    if (theme === 'light') setTheme('dark');
+    else if (theme === 'dark') setTheme('system');
+    else setTheme('light');
   };
 
   return (
@@ -48,8 +50,10 @@ export function ThemeToggle() {
           }
         }}
         role='switch'
-        aria-checked={theme === 'dark'}
-        aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+        aria-checked={theme !== 'light'}
+        aria-label={`Switch theme: ${
+          theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
+        }`}
         tabIndex={0}
         style={{
           // backgroundColor: theme === 'light' ? '#3b82f6' : '#1f2937',
@@ -61,24 +65,32 @@ export function ThemeToggle() {
           className='absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out'
           style={{
             transform:
-              theme === 'light' ? 'translateX(4px)' : 'translateX(36px)',
+              theme === 'light'
+                ? 'translateX(4px)'
+                : theme === 'dark'
+                ? 'translateX(24px)'
+                : 'translateX(44px)',
           }}
         />
 
-        {/* Light mode: moon on right side */}
+        {/* Light mode: sun on left side */}
         {theme === 'light' && (
-          <div className='absolute inset-0 flex items-center justify-end pr-2'>
-            <Moon className='w-6 h-6 text-white' />
+          <div className='absolute inset-0 flex items-center justify-start pl-2'>
+            <Sun className='w-3 h-3 text-yellow-400 fill-yellow-400' />
           </div>
         )}
 
-        {/* Dark mode: stars on left side */}
+        {/* Dark mode: moon in middle */}
         {theme === 'dark' && (
-          <div className='absolute inset-0 flex items-center justify-start pl-2'>
-            <div className='flex items-center gap-0.5'>
-              <Sun className='w-1.5 h-1.5 text-yellow-400 fill-yellow-400' />
-              {/* <Sun className='w-1 h-1 text-yellow-300 fill-yellow-300' /> */}
-            </div>
+          <div className='absolute inset-0 flex items-center justify-center'>
+            <Moon className='w-3 h-3 text-blue-300' />
+          </div>
+        )}
+
+        {/* System mode: monitor on right side */}
+        {theme === 'system' && (
+          <div className='absolute inset-0 flex items-center justify-end pr-2'>
+            <Monitor className='w-3 h-3 text-gray-300' />
           </div>
         )}
       </div>
