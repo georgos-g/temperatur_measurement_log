@@ -1,3 +1,4 @@
+import { requireAuthentication } from '@/lib/auth';
 import { generateTemperaturePDF } from '@/lib/pdf';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -13,13 +14,17 @@ let temperatureRecords: Array<{
 
 export async function GET(request: NextRequest) {
   try {
+    // Get authenticated user
+    const user = requireAuthentication(request);
+
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const userName = searchParams.get('userName');
 
-    // Fetch current records directly from database to get full TemperatureRecord objects
-    const { getAllTemperatureRecords } = await import('@/lib/db');
-    const records = await getAllTemperatureRecords();
+    // Fetch current records for the authenticated user only
+    const { getTemperatureRecordsByUserId } = await import('@/lib/db');
+    const records = await getTemperatureRecordsByUserId(user.id);
     temperatureRecords = records.map((record) => ({
       id: record.id,
       temperature: record.temperature,
@@ -50,8 +55,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Generate PDF
-    const pdfBuffer = await generateTemperaturePDF(filteredRecords);
+    // Generate PDF with user name if provided
+    const pdfBuffer = await generateTemperaturePDF(
+      filteredRecords,
+      userName || undefined
+    );
 
     // Return PDF as response
     return new NextResponse(Buffer.from(pdfBuffer), {

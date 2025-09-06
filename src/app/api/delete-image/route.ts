@@ -1,9 +1,13 @@
+import { requireAuthentication } from '@/lib/auth';
 import { deleteFromLinode } from '@/lib/s3';
 import { sql } from '@vercel/postgres';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Get authenticated user
+    const user = requireAuthentication(request);
+
     const { recordId } = await request.json();
 
     if (!recordId) {
@@ -13,9 +17,9 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Get the current record to find the screenshot URL
+    // Get the current record and verify ownership
     const { rows } = await sql`
-      SELECT screenshot_url FROM temperature_records
+      SELECT screenshot_url, user_id FROM temperature_records
       WHERE id = ${recordId}
     `;
 
@@ -27,6 +31,17 @@ export async function DELETE(request: NextRequest) {
     }
 
     const record = rows[0];
+
+    // Check if the record belongs to the authenticated user
+    if (record.user_id !== parseInt(user.id)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Nicht autorisiert, dieses Bild zu löschen',
+        },
+        { status: 403 }
+      );
+    }
 
     if (!record.screenshot_url) {
       return NextResponse.json(

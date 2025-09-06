@@ -1,13 +1,13 @@
-import {
-  createTableIfNotExists,
-  getAllTemperatureRecords,
-  insertTemperatureRecord,
-} from '@/lib/db';
+import { requireAuthentication } from '@/lib/auth';
+import { createTableIfNotExists, insertTemperatureRecord } from '@/lib/db';
 import { uploadToLinode } from '@/lib/s3';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
+    // Get authenticated user
+    const user = requireAuthentication(request);
+
     const formData = await request.formData();
 
     const temperature = parseFloat(formData.get('temperature') as string);
@@ -50,12 +50,15 @@ export async function POST(request: NextRequest) {
     await createTableIfNotExists();
 
     // Create temperature record in database
-    const record = await insertTemperatureRecord({
-      temperature,
-      date,
-      time,
-      screenshotUrl,
-    });
+    const record = await insertTemperatureRecord(
+      {
+        temperature,
+        date,
+        time,
+        screenshotUrl,
+      },
+      user.id
+    );
 
     // Also save to localStorage as backup for development
     try {
@@ -109,13 +112,17 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Get authenticated user
+    const user = requireAuthentication(request);
+
     // Ensure database table exists
     await createTableIfNotExists();
 
-    // Get all records from database
-    const records = await getAllTemperatureRecords();
+    // Get records for the authenticated user only
+    const { getTemperatureRecordsByUserId } = await import('@/lib/db');
+    const records = await getTemperatureRecordsByUserId(user.id);
 
     return NextResponse.json({
       success: true,

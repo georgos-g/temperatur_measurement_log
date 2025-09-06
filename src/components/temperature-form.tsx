@@ -17,6 +17,7 @@ import { Camera, Download, List, Thermometer, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { UserProfile } from './user-profile';
 
 export function TemperatureForm() {
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
@@ -114,22 +115,30 @@ export function TemperatureForm() {
   const downloadPDF = async () => {
     setIsDownloading(true);
     try {
-      const response = await fetch('/api/pdf');
+      // Get user name from localStorage for PDF
+      const storedUser = localStorage.getItem('user');
+      const userName = storedUser ? JSON.parse(storedUser).name : undefined;
+
+      const url = userName
+        ? `/api/pdf?userName=${encodeURIComponent(userName)}`
+        : '/api/pdf';
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error('Fehler beim Erstellen der PDF');
       }
 
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = downloadUrl;
       a.download = `temperature-log-${
         new Date().toISOString().split('T')[0]
       }.pdf`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(downloadUrl);
       document.body.removeChild(a);
     } catch (error) {
       console.error('Fehler beim Herunterladen der PDF:', error);
@@ -145,6 +154,7 @@ export function TemperatureForm() {
     <div className='container  mx-auto px-4 py-6 max-w-md'>
       <Card>
         <CardHeader className='text-center relative'>
+          <UserProfile />
           <div className='absolute top-4 right-4'>
             <ThemeToggle />
           </div>

@@ -14,7 +14,8 @@ type PDFRecord = {
 };
 
 export async function generateTemperaturePDF(
-  records: PDFRecord[]
+  records: PDFRecord[],
+  userName?: string
 ): Promise<Uint8Array> {
   const pdf = new jsPDF();
 
@@ -25,21 +26,27 @@ export async function generateTemperaturePDF(
   pdf.setFontSize(20);
   pdf.text('Temperaturmessungsprotokoll', 20, 30);
 
+  // User name if provided
+  if (userName) {
+    pdf.setFontSize(12);
+    pdf.text(`Erstellt von: ${userName}`, 20, 40);
+  }
+
   // Date range
   pdf.setFontSize(12);
   const currentDate = new Date().toLocaleDateString('de-DE');
-  pdf.text(`Erstellt am: ${currentDate}`, 20, 45);
+  pdf.text(`Erstellt am: ${currentDate}`, 20, userName ? 50 : 45);
 
   // Headers
   pdf.setFontSize(14);
-  pdf.text('Datum', 20, 65);
-  pdf.text('Uhrzeit', 60, 65);
-  pdf.text('Temp.(°C)', 100, 65);
-  pdf.text('Screenshot', 150, 65);
-  // pdf.text('Bild', 20, 75); // Add image header below date
+  const headerY = userName ? 70 : 65;
+  pdf.text('Datum', 20, headerY);
+  pdf.text('Uhrzeit', 60, headerY);
+  pdf.text('Temp.(°C)', 100, headerY);
+  pdf.text('Screenshot', 150, headerY);
 
   // Draw line under headers
-  pdf.line(20, 70, 190, 70);
+  pdf.line(20, headerY + 5, 190, headerY + 5);
 
   // Process images for records that have screenshot URLs
   const recordsWithImages = records.filter((record) => record.screenshotUrl);
@@ -70,7 +77,7 @@ export async function generateTemperaturePDF(
 
   // Records
   pdf.setFontSize(10);
-  let yPosition = 80;
+  let yPosition = userName ? 85 : 80;
   const rowHeight = 85; // Reduced to fit smaller video aspect ratio images
 
   for (let i = 0; i < records.length; i++) {

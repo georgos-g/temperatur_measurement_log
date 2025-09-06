@@ -1,3 +1,4 @@
+import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/lib/theme-context';
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
@@ -53,7 +54,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full bg-background text-foreground safe-area-padding`}
       >
         <ThemeProvider defaultTheme='system' storageKey='temperature-app-theme'>
-          <div className='min-h-screen flex flex-col'>{children}</div>
+          <AuthProvider>
+            <div className='min-h-screen flex flex-col'>{children}</div>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

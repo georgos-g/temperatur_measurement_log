@@ -1,9 +1,11 @@
 'use client';
 
+import { LoginForm } from '@/components/login-form';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/lib/auth-context';
 import { TemperatureRecord } from '@/types/temperature';
 import {
   AlertTriangle,
@@ -25,6 +27,7 @@ type SortField = 'temperature' | 'date' | 'time';
 type SortDirection = 'asc' | 'desc';
 
 export default function ResultsPage() {
+  const { user, isLoading } = useAuth();
   const [records, setRecords] = useState<TemperatureRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
@@ -44,6 +47,22 @@ export default function ResultsPage() {
     string | null
   >(null);
   const itemsPerPage = 12;
+
+  const fetchRecords = async () => {
+    try {
+      const response = await fetch('/api/temperature');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Fetched data:', data);
+        setRecords(data.records || []);
+        console.log('Records set:', data.records || []);
+      }
+    } catch (error) {
+      console.error('Error fetching records:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchRecords();
@@ -162,22 +181,6 @@ export default function ResultsPage() {
     }
   };
 
-  const fetchRecords = async () => {
-    try {
-      const response = await fetch('/api/temperature');
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Fetched data:', data);
-        setRecords(data.records || []);
-        console.log('Records set:', data.records || []);
-      }
-    } catch (error) {
-      console.error('Error fetching records:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const openSlideshow = (index: number) => {
     setSelectedImageIndex(index);
   };
@@ -217,10 +220,6 @@ export default function ResultsPage() {
     }
   }, [selectedImageIndex, records]);
 
-  const imagesWithScreenshots = records.filter((r) => r.screenshotUrl);
-  const currentImageRecord =
-    selectedImageIndex !== null ? records[selectedImageIndex] : null;
-
   // Keyboard navigation for slideshow
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -244,6 +243,40 @@ export default function ResultsPage() {
       return () => document.removeEventListener('keydown', handleKeyPress);
     }
   }, [selectedImageIndex, nextImage, prevImage, closeSlideshow]);
+
+  // Authentication check
+  if (isLoading) {
+    return (
+      <div className='min-h-screen bg-background flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4'></div>
+          <p className='text-gray-600'>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className='min-h-screen bg-background flex items-center justify-center p-4'>
+        <div className='w-full max-w-md'>
+          <div className='text-center mb-8'>
+            <h1 className='text-3xl font-bold text-gray-900 mb-2'>
+              Temperature Logger
+            </h1>
+            <p className='text-gray-600'>
+              Please log in to view your temperature records
+            </p>
+          </div>
+          <LoginForm />
+        </div>
+      </div>
+    );
+  }
+
+  const imagesWithScreenshots = records.filter((r) => r.screenshotUrl);
+  const currentImageRecord =
+    selectedImageIndex !== null ? records[selectedImageIndex] : null;
 
   if (loading) {
     return (
