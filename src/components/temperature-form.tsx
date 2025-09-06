@@ -81,6 +81,7 @@ export function TemperatureForm() {
       formData.append('temperature', data.temperature.toString());
       formData.append('date', data.date);
       formData.append('time', data.time);
+      formData.append('location', data.location);
 
       if (data.screenshot) {
         formData.append('screenshot', data.screenshot);
