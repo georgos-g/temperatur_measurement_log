@@ -48,6 +48,10 @@ export default function ResultsPage() {
   >(null);
   const itemsPerPage = 12;
 
+  // Touch/Swipe handling for mobile
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
   const fetchRecords = async () => {
     try {
       const response = await fetch('/api/temperature');
@@ -183,6 +187,31 @@ export default function ResultsPage() {
 
   const openSlideshow = (index: number) => {
     setSelectedImageIndex(index);
+  };
+
+  // Touch handlers for swipe navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 75; // Minimum swipe distance
+    const isRightSwipe = distance < -75; // Minimum swipe distance
+
+    if (isLeftSwipe && nextImage) {
+      nextImage();
+    }
+    if (isRightSwipe && prevImage) {
+      prevImage();
+    }
   };
 
   const closeSlideshow = useCallback(() => {
@@ -634,20 +663,28 @@ export default function ResultsPage() {
 
         {/* Slideshow Modal */}
         {selectedImageIndex !== null && currentImageRecord?.screenshotUrl && (
-          <div className='fixed inset-0 bg-black/80 dark:bg-black/90 z-50 flex items-center justify-center p-4'>
+          <div
+            className='fixed inset-0 bg-black/80 dark:bg-black/90 z-50 flex items-center justify-center p-4'
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div className='relative max-w-4xl max-h-full'>
               {/* Close Button */}
               <button
                 onClick={closeSlideshow}
-                className='absolute -top-12 right-0 text-white hover:text-gray-300 text-xl font-bold'
+                className='absolute -top-14 right-0 text-white hover:text-gray-300 text-2xl font-bold bg-black/5 rounded-full w-10 h-10 flex items-center justify-center z-10 touch-manipulation'
                 title='Schließen (Esc)'
               >
                 ✕
               </button>
 
-              {/* Keyboard Instructions */}
-              <div className='absolute -top-12 left-0 text-white/70 text-sm'>
+              {/* Instructions */}
+              <div className='absolute -top-12 left-0 text-white/70 text-sm hidden md:block'>
                 Verwende ← → Tasten zum Navigieren, Esc zum Schließen
+              </div>
+              <div className='absolute -top-12 left-0 text-white/70 text-sm md:hidden'>
+                Wische nach links/rechts zum Navigieren
               </div>
 
               {/* Navigation Buttons */}
@@ -655,14 +692,14 @@ export default function ResultsPage() {
                 <>
                   <button
                     onClick={prevImage}
-                    className='absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 text-3xl font-bold bg-black/50 rounded-full w-12 h-12 flex items-center justify-center'
+                    className='absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 text-3xl font-bold bg-black/50 rounded-full w-14 h-14 flex items-center justify-center touch-manipulation active:scale-95 transition-transform'
                     title='Vorheriges Bild (←)'
                   >
                     ‹
                   </button>
                   <button
                     onClick={nextImage}
-                    className='absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 text-3xl font-bold bg-black/50 rounded-full w-12 h-12 flex items-center justify-center'
+                    className='absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 text-3xl font-bold bg-black/50 rounded-full w-14 h-14 flex items-center justify-center touch-manipulation active:scale-95 transition-transform'
                     title='Nächstes Bild (→)'
                   >
                     ›
