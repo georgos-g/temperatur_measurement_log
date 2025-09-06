@@ -673,7 +673,7 @@ export default function ResultsPage() {
               {/* Close Button */}
               <button
                 onClick={closeSlideshow}
-                className='absolute top-14 right-0 text-white hover:text-gray-300 text-2xl font-bold bg-black/5 hover:bg-black/80 rounded-full w-10 h-10 flex items-center justify-center z-10 touch-manipulation transition-colors'
+                className='absolute -top-14 right-0 text-white hover:text-gray-300 text-2xl font-bold bg-black/5 hover:bg-black/80 rounded-full w-10 h-10 flex items-center justify-center z-10 touch-manipulation transition-colors'
                 title='Schließen (Esc)'
               >
                 ✕
