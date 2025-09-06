@@ -55,9 +55,9 @@ export async function generateTemperaturePDF(
   const imageUrls = recordsWithImages.map((record) => record.screenshotUrl!);
 
   const imageProcessingOptions: ImageProcessingOptions = {
-    maxWidth: 120, // Keep current size
-    maxHeight: 68, // Keep current size
-    quality: 0.99, // Increase quality to maximum
+    maxWidth: 200, // Higher resolution for better quality
+    maxHeight: 112, // Higher resolution for better quality
+    quality: 1.0, // Maximum quality
   };
 
   console.log(`Processing ${imageUrls.length} images for PDF generation...`);
@@ -80,13 +80,13 @@ export async function generateTemperaturePDF(
   // Records
   pdf.setFontSize(10);
   let yPosition = userName ? 85 : 80;
-  const rowHeight = 85; // Reduced to fit smaller video aspect ratio images
+  const rowHeight = 35; // Optimized for compact layout with small images
 
   for (let i = 0; i < records.length; i++) {
     const record = records[i];
 
     // Check if we need a new page
-    if (yPosition + rowHeight > 270) {
+    if (yPosition + rowHeight > 280) {
       pdf.addPage();
       yPosition = 30;
     }
@@ -103,13 +103,14 @@ export async function generateTemperaturePDF(
       if (processedImage) {
         try {
           // Add image to PDF below the Screenshot column on the right side
+          // Always display in landscape mode - images are pre-rotated if needed
           pdf.addImage(
             processedImage.data,
             'JPEG',
             155, // x position (below Screenshot column)
-            yPosition + 0, // y position (below the text)
-            processedImage.width * 0.5, // Keep current size
-            processedImage.height * 0.5 // Keep current size
+            yPosition - 8, // y position (slightly above text for better alignment)
+            processedImage.width * 0.3, // Optimized scale for high quality
+            processedImage.height * 0.3 // Optimized scale for high quality
           );
           console.log(
             `Added image below Screenshot column for record ${record.id}`
@@ -136,7 +137,7 @@ export async function generateTemperaturePDF(
   }
 
   // Summary - ensure we have enough space
-  if (yPosition + 40 > 270) {
+  if (yPosition + 40 > 280) {
     pdf.addPage();
     yPosition = 30;
   }

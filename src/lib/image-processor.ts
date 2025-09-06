@@ -11,6 +11,7 @@ export interface ProcessedImage {
   width: number;
   height: number;
   format: 'jpeg' | 'png';
+  isRotated?: boolean; // Track if image was rotated to landscape
 }
 
 /**
@@ -51,27 +52,73 @@ export async function downloadAndResizeImage(
     // Load the image using canvas
     const image = await loadImage(buffer);
 
-    // Calculate new dimensions maintaining aspect ratio
+    // Determine if image needs rotation to landscape
+    const isPortrait = image.height > image.width;
+    const needsRotation = isPortrait;
+
+    if (needsRotation) {
+      console.log(`Rotating portrait image to landscape: ${imageUrl}`);
+    }
+
+    // Calculate dimensions for landscape orientation
+    // For portrait images, swap width/height to get proper landscape dimensions
+    const sourceWidth = needsRotation ? image.height : image.width;
+    const sourceHeight = needsRotation ? image.width : image.height;
+
     const { width, height } = calculateDimensions(
-      image.width,
-      image.height,
+      sourceWidth,
+      sourceHeight,
       options.maxWidth,
       options.maxHeight
     );
 
-    // Create canvas and draw resized image
+    // Create canvas for landscape orientation
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Enable image smoothing for better quality
+    // Enable high-quality image smoothing for best results
     ctx.imageSmoothingEnabled = true;
 
-    // Draw the resized image
-    ctx.drawImage(image, 0, 0, width, height);
+    // Draw the image with proper rotation
+    if (needsRotation) {
+      // Save the current transformation matrix
+      ctx.save();
 
-    // Convert to JPEG for smaller file size with maximum quality
+      // Move to center of canvas
+      ctx.translate(width / 2, height / 2);
+
+      // Rotate 90 degrees clockwise
+      ctx.rotate(Math.PI / 2);
+
+      // Calculate the scaled dimensions for the rotated image
+      const scaleX = width / image.height; // canvas width / original image height (after rotation)
+      const scaleY = height / image.width; // canvas height / original image width (after rotation)
+      const scale = Math.min(scaleX, scaleY); // use smaller scale to maintain aspect ratio
+
+      const scaledWidth = image.width * scale;
+      const scaledHeight = image.height * scale;
+
+      // Draw the image centered with proper scaling
+      ctx.drawImage(
+        image,
+        -scaledWidth / 2,
+        -scaledHeight / 2,
+        scaledWidth,
+        scaledHeight
+      );
+
+      // Restore the transformation matrix
+      ctx.restore();
+    } else {
+      // Draw the image normally (already landscape)
+      ctx.drawImage(image, 0, 0, width, height);
+    }
+
+    // Convert to JPEG with maximum quality settings
     const jpegBuffer = canvas.toBuffer('image/jpeg', {
-      quality: options.quality || 0.99, // Maximum quality
+      quality: options.quality || 1.0, // Maximum quality
+      progressive: false, // Disable progressive for sharper output
+      chromaSubsampling: false, // Disable chroma subsampling for better quality
     });
 
     return {
@@ -79,6 +126,7 @@ export async function downloadAndResizeImage(
       width,
       height,
       format: 'jpeg',
+      isRotated: needsRotation,
     };
   } catch (error) {
     console.error(`Error processing image from ${imageUrl}:`, error);
