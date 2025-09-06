@@ -18,7 +18,7 @@ export function UserProfile() {
         className='flex items-center gap-2'
       >
         <LogOut className='w-4 h-4' />
-        {/* Logout */}
+        {/* Abmelden */}
       </Button>
       <div className='flex items-center gap-2'>
         <div className='p-2 bg-blue-100 rounded-full'>

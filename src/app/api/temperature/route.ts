@@ -13,12 +13,13 @@ export async function POST(request: NextRequest) {
     const temperature = parseFloat(formData.get('temperature') as string);
     const date = formData.get('date') as string;
     const time = formData.get('time') as string;
+    const location = formData.get('location') as string;
     const screenshot = formData.get('screenshot') as File | null;
 
     // Validate required fields
-    if (!temperature || !date || !time) {
+    if (!temperature || !date || !time || !location) {
       return NextResponse.json(
-        { error: 'Temperatur, Datum und Uhrzeit sind erforderlich' },
+        { error: 'Temperatur, Datum, Uhrzeit und Standort sind erforderlich' },
         { status: 400 }
       );
     }
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
         temperature,
         date,
         time,
+        location,
         screenshotUrl,
       },
       user.id
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
         temperature: record.temperature,
         date: record.date,
         time: record.time,
+        location: record.location,
         screenshotUrl: record.screenshotUrl,
         createdAt: record.createdAt,
       };
@@ -100,6 +103,7 @@ export async function POST(request: NextRequest) {
         temperature: record.temperature,
         date: record.date,
         time: record.time,
+        location: record.location,
         screenshotUrl: record.screenshotUrl,
       },
     });
@@ -131,6 +135,7 @@ export async function GET(request: NextRequest) {
         temperature: record.temperature,
         date: record.date,
         time: record.time,
+        location: record.location,
         screenshotUrl: record.screenshotUrl,
       })),
     });

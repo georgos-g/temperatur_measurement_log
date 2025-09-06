@@ -220,7 +220,7 @@ export default function ResultsPage() {
     }
   }, [selectedImageIndex, records]);
 
-  // Keyboard navigation for slideshow
+  // Tastatur-Navigation für Diashow
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (selectedImageIndex === null) return;
@@ -250,7 +250,7 @@ export default function ResultsPage() {
       <div className='min-h-screen bg-background flex items-center justify-center'>
         <div className='text-center'>
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4'></div>
-          <p className='text-gray-600'>Loading...</p>
+          <p className='text-gray-600'>Lädt...</p>
         </div>
       </div>
     );
@@ -427,7 +427,7 @@ export default function ResultsPage() {
                     <span className='hidden sm:inline'>
                       Filter zurücksetzen
                     </span>
-                    <span className='sm:hidden'>Reset</span>
+                    <span className='sm:hidden'>Zurücksetzen</span>
                   </Button>
                 )}
               </div>
@@ -486,11 +486,17 @@ export default function ResultsPage() {
                   <Card key={record.id} className='overflow-hidden'>
                     <CardHeader className='pb-2 sm:pb-3 px-4 sm:px-6'>
                       <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-1 text-sm sm:text-base text-muted-foreground'>
-                          <Calendar className='h-3 w-3 flex-shrink-0' />
-                          <span className='truncate'>
-                            {record.date} {record.time}
-                          </span>
+                        <div className='flex flex-col gap-1'>
+                          <div className='flex items-center gap-1 text-sm sm:text-base text-muted-foreground'>
+                            <Calendar className='h-3 w-3 flex-shrink-0' />
+                            <span className='truncate'>
+                              {record.date} {record.time}
+                            </span>
+                          </div>
+                          <div className='flex items-center gap-1 text-xs text-muted-foreground'>
+                            <span className='font-medium'>Standort:</span>
+                            <span>{record.location}</span>
+                          </div>
                         </div>
                         <button
                           onClick={() => setShowDeleteEntryConfirm(record.id)}
@@ -682,10 +688,15 @@ export default function ResultsPage() {
                       {currentImageRecord.temperature}°C
                     </span>
                   </div>
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-2 mb-1'>
                     <Calendar className='h-4 w-4' />
                     <span>
                       {currentImageRecord.date} at {currentImageRecord.time}
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <span className='text-sm'>
+                      Standort: {currentImageRecord.location}
                     </span>
                   </div>
                 </div>

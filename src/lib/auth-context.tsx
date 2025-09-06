@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on mount
+    // Prüfe auf bestehende Sitzung beim Laden
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      // Set cookie for server-side authentication
+      // Cookie für serverseitige Authentifizierung setzen
       document.cookie = `user-session=${JSON.stringify(
         userData
       )}; path=/; max-age=86400; samesite=strict`;
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    // Clear cookie for server-side authentication
+    // Cookie für serverseitige Authentifizierung löschen
     document.cookie =
       'user-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   };

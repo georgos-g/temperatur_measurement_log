@@ -21,6 +21,7 @@ export async function createTableIfNotExists() {
         temperature DECIMAL(5,2) NOT NULL,
         date VARCHAR(20) NOT NULL,
         time VARCHAR(20) NOT NULL,
+        location VARCHAR(50) NOT NULL,
         screenshot_url TEXT,
         user_id INTEGER REFERENCES users(id),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -29,6 +30,7 @@ export async function createTableIfNotExists() {
 
     // Migration: Add user_id column to existing tables if it doesn't exist
     await migrateTemperatureRecordsTable();
+    await migrateTemperatureRecordsLocation();
   } catch (error) {
     console.error('Error creating tables:', error);
     throw error;
@@ -66,6 +68,39 @@ export async function migrateTemperatureRecordsTable() {
   }
 }
 
+export async function migrateTemperatureRecordsLocation() {
+  try {
+    // Check if location column exists
+    const result = await sql`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'temperature_records'
+      AND column_name = 'location'
+    `;
+
+    if (result.rows.length === 0) {
+      console.log('Adding location column to temperature_records table...');
+
+      // Add location column
+      await sql`
+        ALTER TABLE temperature_records
+        ADD COLUMN location VARCHAR(50) NOT NULL DEFAULT 'Küche'
+      `;
+
+      console.log(
+        'Successfully added location column to temperature_records table'
+      );
+    } else {
+      console.log(
+        'location column already exists in temperature_records table'
+      );
+    }
+  } catch (error) {
+    console.error('Error migrating temperature_records location:', error);
+    throw error;
+  }
+}
+
 export async function insertTemperatureRecord(
   record: Omit<TemperatureRecord, 'id' | 'createdAt'>,
   userId: string
@@ -73,11 +108,11 @@ export async function insertTemperatureRecord(
   try {
     console.log('Attempting to insert into Vercel Postgres...');
     const result = await sql`
-      INSERT INTO temperature_records (temperature, date, time, screenshot_url, user_id)
+      INSERT INTO temperature_records (temperature, date, time, location, screenshot_url, user_id)
       VALUES (${record.temperature}, ${record.date}, ${record.time}, ${
-      record.screenshotUrl
-    }, ${parseInt(userId)})
-      RETURNING id, temperature, date, time, screenshot_url, created_at
+      record.location
+    }, ${record.screenshotUrl}, ${parseInt(userId)})
+      RETURNING id, temperature, date, time, location, screenshot_url, created_at
     `;
 
     const newRecord = result.rows[0] as TemperatureRecord;
@@ -100,6 +135,7 @@ export async function insertTemperatureRecord(
         temperature: record.temperature,
         date: record.date,
         time: record.time,
+        location: record.location,
         screenshotUrl: record.screenshotUrl,
         createdAt: new Date(),
       };
@@ -119,7 +155,7 @@ export async function getAllTemperatureRecords(): Promise<TemperatureRecord[]> {
   try {
     console.log('Attempting to fetch from Vercel Postgres...');
     const result = await sql`
-      SELECT id, temperature, date, time, screenshot_url, created_at
+      SELECT id, temperature, date, time, location, screenshot_url, created_at
       FROM temperature_records
       ORDER BY created_at DESC
     `;
@@ -130,6 +166,7 @@ export async function getAllTemperatureRecords(): Promise<TemperatureRecord[]> {
       temperature: parseFloat(row.temperature),
       date: row.date,
       time: row.time,
+      location: row.location,
       screenshotUrl: row.screenshot_url,
       createdAt: new Date(row.created_at),
     }));
@@ -167,7 +204,7 @@ export async function getTemperatureRecordsByUserId(
   try {
     console.log('Attempting to fetch user records from Vercel Postgres...');
     const result = await sql`
-      SELECT id, temperature, date, time, screenshot_url, created_at
+      SELECT id, temperature, date, time, location, screenshot_url, created_at
       FROM temperature_records
       WHERE user_id = ${parseInt(userId)}
       ORDER BY created_at DESC
@@ -179,6 +216,7 @@ export async function getTemperatureRecordsByUserId(
       temperature: parseFloat(row.temperature),
       date: row.date,
       time: row.time,
+      location: row.location,
       screenshotUrl: row.screenshot_url,
       createdAt: new Date(row.created_at),
     }));
@@ -270,7 +308,7 @@ export async function getTemperatureRecordById(
 ): Promise<TemperatureRecord | null> {
   try {
     const result = await sql`
-      SELECT id, temperature, date, time, screenshot_url, created_at
+      SELECT id, temperature, date, time, location, screenshot_url, created_at
       FROM temperature_records
       WHERE id = ${parseInt(id)}
     `;
@@ -285,6 +323,7 @@ export async function getTemperatureRecordById(
       temperature: parseFloat(row.temperature),
       date: row.date,
       time: row.time,
+      location: row.location,
       screenshotUrl: row.screenshot_url,
       createdAt: new Date(row.created_at),
     };

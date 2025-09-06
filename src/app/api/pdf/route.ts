@@ -9,6 +9,7 @@ let temperatureRecords: Array<{
   temperature: number;
   date: string;
   time: string;
+  location: string;
   screenshotUrl?: string;
 }> = [];
 
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
       temperature: record.temperature,
       date: record.date,
       time: record.time,
+      location: record.location,
       screenshotUrl: record.screenshotUrl,
     }));
 

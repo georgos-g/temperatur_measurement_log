@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { formatGermanDate, formatGermanTime } from '@/lib/utils';
 import { temperatureSchema, type TemperatureData } from '@/types/temperature';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -184,6 +185,30 @@ export function TemperatureForm() {
               {errors.temperature && (
                 <p className='text-sm text-destructive'>
                   {errors.temperature.message}
+                </p>
+              )}
+            </div>
+
+            {/* Location Select */}
+            <div className='space-y-2'>
+              <label htmlFor='location' className='text-sm font-medium'>
+                Standort
+              </label>
+              <Select
+                id='location'
+                {...register('location')}
+                defaultValue='Küche'
+              >
+                <option value='Küche'>Küche</option>
+                <option value='Gäste WC'>Gäste WC</option>
+                <option value='Bad Waschbecken'>Bad Waschbecken</option>
+                <option value='Bad-Badewanne/Dusche'>
+                  Bad Badewanne/Dusche
+                </option>
+              </Select>
+              {errors.location && (
+                <p className='text-sm text-destructive'>
+                  {errors.location.message}
                 </p>
               )}
             </div>

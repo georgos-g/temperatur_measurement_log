@@ -10,6 +10,7 @@ type PDFRecord = {
   temperature: number;
   date: string;
   time: string;
+  location: string;
   screenshotUrl?: string;
 };
 
@@ -41,9 +42,10 @@ export async function generateTemperaturePDF(
   pdf.setFontSize(14);
   const headerY = userName ? 70 : 65;
   pdf.text('Datum', 20, headerY);
-  pdf.text('Uhrzeit', 60, headerY);
-  pdf.text('Temp.(°C)', 100, headerY);
-  pdf.text('Screenshot', 150, headerY);
+  pdf.text('Uhrzeit', 50, headerY);
+  pdf.text('Temp.(°C)', 80, headerY);
+  pdf.text('Standort', 110, headerY);
+  pdf.text('Screenshot', 160, headerY);
 
   // Draw line under headers
   pdf.line(20, headerY + 5, 190, headerY + 5);
@@ -91,8 +93,9 @@ export async function generateTemperaturePDF(
 
     // Draw record data
     pdf.text(record.date, 20, yPosition);
-    pdf.text(record.time, 60, yPosition);
-    pdf.text(record.temperature.toString(), 100, yPosition);
+    pdf.text(record.time, 50, yPosition);
+    pdf.text(record.temperature.toString(), 80, yPosition);
+    pdf.text(record.location, 110, yPosition);
 
     // Handle screenshot
     if (record.screenshotUrl && imageMap.has(record.screenshotUrl)) {
@@ -103,7 +106,7 @@ export async function generateTemperaturePDF(
           pdf.addImage(
             processedImage.data,
             'JPEG',
-            145, // x position (below Screenshot column)
+            155, // x position (below Screenshot column)
             yPosition + 0, // y position (below the text)
             processedImage.width * 0.5, // Keep current size
             processedImage.height * 0.5 // Keep current size
@@ -116,17 +119,17 @@ export async function generateTemperaturePDF(
             `Failed to add image for record ${record.id}:`,
             imageError
           );
-          pdf.text('Fehler', 150, yPosition);
+          pdf.text('Fehler', 160, yPosition);
         }
       } else {
-        pdf.text('Fehler', 150, yPosition);
+        pdf.text('Fehler', 160, yPosition);
       }
     } else if (record.screenshotUrl) {
       // Screenshot URL exists but image processing failed
-      pdf.text('Fehler', 150, yPosition);
+      pdf.text('Fehler', 160, yPosition);
     } else {
       // No screenshot - show indicator in screenshot column
-      pdf.text('-', 150, yPosition);
+      pdf.text('-', 160, yPosition);
     }
 
     yPosition += rowHeight;

@@ -22,7 +22,7 @@ export function LoginForm() {
     try {
       await login(name, email);
     } catch (error) {
-      setError('Login failed. Please try again.');
+      setError('Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
@@ -37,8 +37,10 @@ export function LoginForm() {
             <LogIn className='w-6 h-6 text-blue-600' />
           </div>
         </div>
-        <h2 className='text-2xl font-bold text-gray-900_'>Welcome</h2>
-        <p className='text-gray-600_'>Enter your details to continue</p>
+        <h2 className='text-2xl font-bold text-gray-900_'>Willkommen</h2>
+        <p className='text-gray-600_'>
+          Geben Sie Ihre Daten ein, um fortzufahren
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className='space-y-4'>
@@ -56,7 +58,7 @@ export function LoginForm() {
               type='text'
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder='Enter your name'
+              placeholder='Geben Sie Ihren Namen ein'
               className='pl-10'
               required
             />
@@ -68,7 +70,7 @@ export function LoginForm() {
             htmlFor='email'
             className='block text-sm font-medium text-gray-700_ mb-1'
           >
-            Email
+            E-Mail
           </label>
           <div className='relative'>
             <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400_' />
@@ -77,7 +79,7 @@ export function LoginForm() {
               type='email'
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder='Enter your email'
+              placeholder='Geben Sie Ihre E-Mail ein'
               className='pl-10'
               required
             />
@@ -91,7 +93,7 @@ export function LoginForm() {
         )}
 
         <Button type='submit' className='w-full' disabled={isLoading}>
-          {isLoading ? 'Signing in...' : 'Sign In'}
+          {isLoading ? 'Anmeldung läuft...' : 'Anmelden'}
         </Button>
       </form>
     </Card>

@@ -4,6 +4,12 @@ export const temperatureSchema = z.object({
   temperature: z.number().min(-50).max(100),
   date: z.string(),
   time: z.string(),
+  location: z.enum([
+    'Küche',
+    'Gäste WC',
+    'Bad Waschbecken',
+    'Bad-Badewanne/Dusche',
+  ]),
   screenshot: z.instanceof(File).optional(),
 });
 
@@ -14,6 +20,7 @@ export interface TemperatureRecord {
   temperature: number;
   date: string;
   time: string;
+  location: string;
   screenshotUrl?: string;
   createdAt: Date;
 }
