@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate PDF
-    const pdfBuffer = generateTemperaturePDF(filteredRecords);
+    const pdfBuffer = await generateTemperaturePDF(filteredRecords);
 
     // Return PDF as response
     return new NextResponse(Buffer.from(pdfBuffer), {

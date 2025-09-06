@@ -1,7 +1,7 @@
 'use client';
 
 import { useTheme } from '@/lib/theme-context';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function ThemeToggle() {
@@ -14,34 +14,24 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className='flex items-center gap-3'>
-        {/* <span className='text-sm font-medium text-gray-500'>Light</span> */}
-        <div className='relative w-16 h-8 bg-gray-300 rounded-full cursor-pointer'>
-          <div className='absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md'></div>
+      <div className='flex items-center gap-2'>
+        <div className='relative w-12 h-6 bg-gray-200 rounded-full cursor-pointer'>
+          <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm'></div>
         </div>
-        {/* <span className='text-sm font-medium text-gray-500'>Dark</span> */}
       </div>
     );
   }
 
   const toggleTheme = () => {
-    if (theme === 'light') setTheme('dark');
-    else if (theme === 'dark') setTheme('system');
-    else setTheme('light');
+    setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  return (
-    <div className='flex items-center gap-3'>
-      {/* <span
-        className={`text-sm font-medium transition-colors duration-200 ${
-          theme === 'light' ? 'text-gray-900 font-semibold' : 'text-gray-500'
-        }`}
-      >
-        Light
-      </span> */}
+  const isDark = theme === 'dark';
 
+  return (
+    <div className='flex items-center gap-2'>
       <div
-        className='relative w-16 h-8 rounded-full cursor-pointer transition-all duration-300 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+        className='relative w-12 h-6 rounded-full cursor-pointer transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2'
         onClick={toggleTheme}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -50,58 +40,35 @@ export function ThemeToggle() {
           }
         }}
         role='switch'
-        aria-checked={theme !== 'light'}
-        aria-label={`Switch theme: ${
-          theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
-        }`}
+        aria-checked={isDark}
+        aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
         tabIndex={0}
         style={{
-          // backgroundColor: theme === 'light' ? '#3b82f6' : '#1f2937',
-          backgroundColor: theme === 'light' ? '#1f2937' : '#1f2937',
+          backgroundColor: isDark ? '#1f2937' : '#e5e7eb',
         }}
       >
         {/* Toggle knob */}
         <div
-          className='absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out'
+          className='absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-200 ease-in-out'
           style={{
-            transform:
-              theme === 'light'
-                ? 'translateX(4px)'
-                : theme === 'dark'
-                ? 'translateX(24px)'
-                : 'translateX(44px)',
+            transform: isDark ? 'translateX(24px)' : 'translateX(2px)',
           }}
         />
 
-        {/* Light mode: sun on left side */}
-        {theme === 'light' && (
-          <div className='absolute inset-0 flex items-center justify-start pl-2'>
-            <Sun className='w-3 h-3 text-yellow-400 fill-yellow-400' />
-          </div>
-        )}
-
-        {/* Dark mode: moon in middle */}
-        {theme === 'dark' && (
-          <div className='absolute inset-0 flex items-center justify-center'>
-            <Moon className='w-3 h-3 text-blue-300' />
-          </div>
-        )}
-
-        {/* System mode: monitor on right side */}
-        {theme === 'system' && (
-          <div className='absolute inset-0 flex items-center justify-end pr-2'>
-            <Monitor className='w-3 h-3 text-gray-300' />
-          </div>
-        )}
+        {/* Icons */}
+        <div className='absolute inset-0 flex items-center justify-between px-1.5'>
+          <Sun
+            className={`w-3 h-3 transition-colors duration-200 ${
+              !isDark ? 'text-amber-500' : 'text-gray-400'
+            }`}
+          />
+          <Moon
+            className={`w-3 h-3 transition-colors duration-200 ${
+              isDark ? 'text-blue-300' : 'text-gray-400'
+            }`}
+          />
+        </div>
       </div>
-
-      {/* <span
-        className={`text-sm font-medium transition-colors duration-200 ${
-          theme === 'dark' ? 'text-white font-semibold' : 'text-gray-500'
-        }`}
-      >
-        Dark
-      </span> */}
     </div>
   );
 }

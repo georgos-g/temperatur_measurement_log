@@ -1,4 +1,9 @@
 import jsPDF from 'jspdf';
+import {
+  ImageProcessingOptions,
+  ProcessedImage,
+  processImagesBatch,
+} from './image-processor';
 
 type PDFRecord = {
   id: string;
@@ -8,7 +13,9 @@ type PDFRecord = {
   screenshotUrl?: string;
 };
 
-export function generateTemperaturePDF(records: PDFRecord[]): Uint8Array {
+export async function generateTemperaturePDF(
+  records: PDFRecord[]
+): Promise<Uint8Array> {
   const pdf = new jsPDF();
 
   // Set font
@@ -27,39 +34,99 @@ export function generateTemperaturePDF(records: PDFRecord[]): Uint8Array {
   pdf.setFontSize(14);
   pdf.text('Datum', 20, 65);
   pdf.text('Uhrzeit', 60, 65);
-  pdf.text('Temperatur (°C)', 100, 65);
+  pdf.text('Temp.(°C)', 100, 65);
   pdf.text('Screenshot', 150, 65);
+  // pdf.text('Bild', 20, 75); // Add image header below date
 
   // Draw line under headers
   pdf.line(20, 70, 190, 70);
 
+  // Process images for records that have screenshot URLs
+  const recordsWithImages = records.filter((record) => record.screenshotUrl);
+  const imageUrls = recordsWithImages.map((record) => record.screenshotUrl!);
+
+  const imageProcessingOptions: ImageProcessingOptions = {
+    maxWidth: 120, // Keep current size
+    maxHeight: 68, // Keep current size
+    quality: 0.99, // Increase quality to maximum
+  };
+
+  console.log(`Processing ${imageUrls.length} images for PDF generation...`);
+
+  // Process images in batches to manage memory
+  const processedImages = await processImagesBatch(
+    imageUrls,
+    imageProcessingOptions,
+    3
+  );
+
+  // Create a map of URL to processed image for easy lookup
+  const imageMap = new Map<string, ProcessedImage>();
+  recordsWithImages.forEach((record, index) => {
+    if (processedImages[index]) {
+      imageMap.set(record.screenshotUrl!, processedImages[index]);
+    }
+  });
+
   // Records
   pdf.setFontSize(10);
   let yPosition = 80;
+  const rowHeight = 85; // Reduced to fit smaller video aspect ratio images
 
-  records.forEach((record) => {
-    if (yPosition > 270) {
-      // New page if needed
+  for (let i = 0; i < records.length; i++) {
+    const record = records[i];
+
+    // Check if we need a new page
+    if (yPosition + rowHeight > 270) {
       pdf.addPage();
       yPosition = 30;
     }
 
+    // Draw record data
     pdf.text(record.date, 20, yPosition);
     pdf.text(record.time, 60, yPosition);
     pdf.text(record.temperature.toString(), 100, yPosition);
 
-    if (record.screenshotUrl) {
-      pdf.text('✓', 150, yPosition);
+    // Handle screenshot
+    if (record.screenshotUrl && imageMap.has(record.screenshotUrl)) {
+      const processedImage = imageMap.get(record.screenshotUrl);
+      if (processedImage) {
+        try {
+          // Add image to PDF below the Screenshot column on the right side
+          pdf.addImage(
+            processedImage.data,
+            'JPEG',
+            145, // x position (below Screenshot column)
+            yPosition + 0, // y position (below the text)
+            processedImage.width * 0.5, // Keep current size
+            processedImage.height * 0.5 // Keep current size
+          );
+          console.log(
+            `Added image below Screenshot column for record ${record.id}`
+          );
+        } catch (imageError) {
+          console.error(
+            `Failed to add image for record ${record.id}:`,
+            imageError
+          );
+          pdf.text('Fehler', 150, yPosition);
+        }
+      } else {
+        pdf.text('Fehler', 150, yPosition);
+      }
+    } else if (record.screenshotUrl) {
+      // Screenshot URL exists but image processing failed
+      pdf.text('Fehler', 150, yPosition);
     } else {
+      // No screenshot - show indicator in screenshot column
       pdf.text('-', 150, yPosition);
     }
 
-    yPosition += 10;
-  });
+    yPosition += rowHeight;
+  }
 
-  // Summary
-  yPosition += 10;
-  if (yPosition > 250) {
+  // Summary - ensure we have enough space
+  if (yPosition + 40 > 270) {
     pdf.addPage();
     yPosition = 30;
   }

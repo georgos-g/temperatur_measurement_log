@@ -142,7 +142,7 @@ export function TemperatureForm() {
   };
 
   return (
-    <div className='container mx-auto px-4 py-6 max-w-md'>
+    <div className='container  mx-auto px-4 py-6 max-w-md'>
       <Card>
         <CardHeader className='text-center relative'>
           <div className='absolute top-4 right-4'>
@@ -178,23 +178,25 @@ export function TemperatureForm() {
               )}
             </div>
 
-            {/* Date Display */}
-            <div className='space-y-2'>
-              <label className='text-sm font-medium'>Datum</label>
-              <div className='rounded-md border bg-muted px-3 py-2 text-sm'>
-                {currentDateTime
-                  ? formatGermanDate(currentDateTime)
-                  : '--.--.----'}
+            <div className='flex justify-between gap-2'>
+              {/* Date Display */}
+              <div className='space-y-2 w-full'>
+                <label className='text-sm font-medium'>Datum</label>
+                <div className='rounded-md border bg-muted px-3 py-2 text-sm'>
+                  {currentDateTime
+                    ? formatGermanDate(currentDateTime)
+                    : '--.--.----'}
+                </div>
               </div>
-            </div>
 
-            {/* Time Display */}
-            <div className='space-y-2'>
-              <label className='text-sm font-medium'>Uhrzeit</label>
-              <div className='rounded-md border bg-muted px-3 py-2 text-sm font-mono'>
-                {currentDateTime
-                  ? formatGermanTime(currentDateTime)
-                  : '--:--:--'}
+              {/* Time Display */}
+              <div className='space-y-2 w-full'>
+                <label className='text-sm font-medium'>Uhrzeit</label>
+                <div className='rounded-md border bg-muted px-3 py-2 text-sm font-mono'>
+                  {currentDateTime
+                    ? formatGermanTime(currentDateTime)
+                    : '--:--:--'}
+                </div>
               </div>
             </div>
 
