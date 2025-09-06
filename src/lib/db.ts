@@ -26,15 +26,49 @@ export async function createTableIfNotExists() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
+
+    // Migration: Add user_id column to existing tables if it doesn't exist
+    await migrateTemperatureRecordsTable();
   } catch (error) {
     console.error('Error creating tables:', error);
     throw error;
   }
 }
 
+export async function migrateTemperatureRecordsTable() {
+  try {
+    // Check if user_id column exists
+    const result = await sql`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'temperature_records'
+      AND column_name = 'user_id'
+    `;
+
+    if (result.rows.length === 0) {
+      console.log('Adding user_id column to temperature_records table...');
+
+      // Add user_id column
+      await sql`
+        ALTER TABLE temperature_records
+        ADD COLUMN user_id INTEGER REFERENCES users(id)
+      `;
+
+      console.log(
+        'Successfully added user_id column to temperature_records table'
+      );
+    } else {
+      console.log('user_id column already exists in temperature_records table');
+    }
+  } catch (error) {
+    console.error('Error migrating temperature_records table:', error);
+    throw error;
+  }
+}
+
 export async function insertTemperatureRecord(
   record: Omit<TemperatureRecord, 'id' | 'createdAt'>,
-  userId?: string
+  userId: string
 ) {
   try {
     console.log('Attempting to insert into Vercel Postgres...');
@@ -42,7 +76,7 @@ export async function insertTemperatureRecord(
       INSERT INTO temperature_records (temperature, date, time, screenshot_url, user_id)
       VALUES (${record.temperature}, ${record.date}, ${record.time}, ${
       record.screenshotUrl
-    }, ${userId ? parseInt(userId) : null})
+    }, ${parseInt(userId)})
       RETURNING id, temperature, date, time, screenshot_url, created_at
     `;
 
