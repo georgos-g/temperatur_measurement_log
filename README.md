@@ -1,21 +1,21 @@
-# Temperatur Logger
+# Temperature Logger
 
-Eine mobile-optimierte Next.js-Anwendung zur Aufzeichnung von Temperaturmessungen mit automatischem deutschem Zeitstempel und Screenshot-Upload-Funktionen.
+A mobile-optimized Next.js application for recording temperature measurements with automatic German timestamp and screenshot upload functionality.
 
-## Funktionen
+## Features
 
-- 📱 **Mobile-First Design**: Responsives Design, optimiert für mobile Geräte
-- 🌡️ **Temperaturaufzeichnung**: Einfaches Formular zur Aufzeichnung von Temperaturmessungen
-- 🕐 **Automatische deutsche Zeit**: Echtzeit-Anzeige von deutschem Datum und Uhrzeit
-- 🗄️ **Datenbank-Speicherung**: Persistente Datenspeicherung mit Vercel Postgres
-- 📸 **Screenshot-Upload**: Upload und Speicherung von Screenshots mit Linode Object Storage
-- 📄 **PDF-Export**: Erstellung und Download von PDF-Berichten der Temperaturaufzeichnungen
-- 🖼️ **Ergebnisgalerie**: Alle Temperaturaufzeichnungen mit Bildthumbnails anzeigen
-- 🎠 **Bild-Slideshow**: Vollbild-Slideshow mit Temperatur- und Datums-Overlay
-- ⌨️ **Tastatur-Navigation**: Slideshow mit Pfeiltasten und Escape navigieren
-- 🔒 **Sichere API**: Sichere Datei-Upload-Verarbeitung mit ordnungsgemäßer Fehlerbehandlung
-- 🎨 **Moderne UI**: Saubere, barrierefreie Oberfläche mit TailwindCSS und Radix UI
-- ⚡ **Leistung**: Optimiert mit Next.js 14 App Router und TypeScript
+- 📱 **Mobile-First Design**: Responsive design, optimized for mobile devices
+- 🌡️ **Temperature Recording**: Simple form for recording temperature measurements
+- 🕐 **Automatic German Time**: Real-time display of German date and time
+- 🗄️ **Database Storage**: Persistent data storage with Vercel Postgres
+- 📸 **Screenshot Upload**: Upload and storage of screenshots with Linode Object Storage
+- 📄 **PDF Export**: Creation and download of PDF reports of temperature recordings
+- 🖼️ **Results Gallery**: Display all temperature recordings with image thumbnails
+- 🎠 **Image Slideshow**: Full-screen slideshow with temperature and date overlay
+- ⌨️ **Keyboard Navigation**: Navigate slideshow with arrow keys and escape
+- 🔒 **Secure API**: Secure file upload processing with proper error handling
+- 🎨 **Modern UI**: Clean, accessible interface with TailwindCSS and Radix UI
+- ⚡ **Performance**: Optimized with Next.js 14 App Router and TypeScript
 
 ## Tech Stack
 
@@ -65,9 +65,9 @@ npm install
 
 ```bash
 # Linode Object Storage
-LINODE_ACCESS_KEY=OZT0VI7ZNO41N5HNLAX7
-LINODE_SECRET_KEY=TxqQ6fav2LzWYoEzh1qCvObqB22HrG2FvIEJfuOY
-LINODE_BUCKET_NAME=temperature-screenshots
+LINODE_ACCESS_KEY=yourAccessKey
+LINODE_SECRET_KEY=yourSecretKey
+LINODE_BUCKET_NAME=yourBucketName
 
 # Vercel Postgres Database
 POSTGRES_URL=your_postgres_url_here
@@ -161,17 +161,17 @@ LINODE_BUCKET_NAME= yourBucketName
 NEXT_PUBLIC_APP_URL= yourPublicUrl
 ```
 
-## Verwendung
+## Usage
 
-1. **Temperatur aufzeichnen**: Temperaturwert in das Formular eingeben
-2. **Automatischer Zeitstempel**: Datum und Uhrzeit werden automatisch im deutschen Format gesetzt
-3. **Screenshot hinzufügen**: Auf den Upload-Bereich tippen, um einen Screenshot hinzuzufügen (optional)
-4. **Aufzeichnung speichern**: Formular absenden, um die Temperaturdaten zu speichern
-5. **Ergebnisse anzeigen**: Auf "Ergebnisse anzeigen" klicken, um alle Temperaturaufzeichnungen zu sehen
-6. **Galerie durchsuchen**: Temperaturaufzeichnungen mit Bildthumbnails anzeigen
-7. **Slideshow öffnen**: Auf ein beliebiges Bild-Thumbnail klicken, um die Slideshow zu öffnen
-8. **Slideshow navigieren**: Pfeiltasten (← →) verwenden, um zu navigieren, Esc zum Schließen
-9. **PDF herunterladen**: Den Button "PDF Bericht" verwenden, um eine PDF aller Aufzeichnungen zu erstellen und herunterzuladen
+1. **Record Temperature**: Enter temperature value in the form
+2. **Automatic Timestamp**: Date and time are automatically set in German format
+3. **Add Screenshot**: Tap the upload area to add a screenshot (optional)
+4. **Save Recording**: Submit the form to save temperature data
+5. **View Results**: Click "View Results" to see all temperature recordings
+6. **Browse Gallery**: View temperature recordings with image thumbnails
+7. **Open Slideshow**: Click any image thumbnail to open the slideshow
+8. **Navigate Slideshow**: Use arrow keys (← →) to navigate, Esc to close
+9. **Download PDF**: Use the "PDF Report" button to create and download a PDF of all recordings
 
 ## API Endpoints
 
@@ -200,19 +200,19 @@ Initialize or verify the database table setup.
 
 ## Pages
 
-### `/` - Temperatur Logger
+### `/` - Temperature Logger
 
-Hauptseite zur Aufzeichnung von Temperaturmessungen mit automatischen deutschen Zeitstempeln und Screenshot-Upload.
+Main page for recording temperature measurements with automatic German timestamps and screenshot upload.
 
-### `/results` - Ergebnisgalerie
+### `/results` - Results Gallery
 
-Alle Temperaturaufzeichnungen in Galerie-Form anzeigen mit:
+Display all temperature recordings in gallery format with:
 
-- Thumbnail-Bilder von Screenshots
-- Temperatur- und Datums-Informationen
-- Thumbnails anklicken, um Slideshow zu öffnen
-- Vollbild-Slideshow mit Navigation
-- Tastatursteuerung (Pfeiltasten, Escape)
+- Thumbnail images of screenshots
+- Temperature and date information
+- Click thumbnails to open slideshow
+- Full-screen slideshow with navigation
+- Keyboard control (arrow keys, escape)
 
 ## Project Structure
 
