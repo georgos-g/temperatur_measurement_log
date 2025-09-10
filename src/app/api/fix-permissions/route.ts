@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log';
+    const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log-img';
     const success = await fixObjectPermissions(bucketName, objectKey);
 
     if (success) {
@@ -34,4 +34,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

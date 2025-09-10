@@ -44,3 +44,4 @@ next-env.d.ts
 .cursorrules/
 .playwright-mcp/*
 contex/*
+CLAUDE.md

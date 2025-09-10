@@ -21,8 +21,7 @@ export async function uploadToLinode(
   file: File,
   fileName: string
 ): Promise<string> {
-  const bucketName =
-    process.env.LINODE_BUCKET_NAME || 'temperature-screenshots';
+  const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log-img';
 
   try {
     // Ensure bucket has public access policy
@@ -54,7 +53,21 @@ export async function uploadToLinode(
     return publicUrl;
   } catch (error) {
     console.error('Fehler beim Upload zu Linode:', error);
-    throw new Error('Screenshot-Upload fehlgeschlagen');
+    console.error('Error details:', {
+      name: (error as Error)?.name,
+      message: (error as Error)?.message,
+      stack: (error as Error)?.stack,
+      code: (error as { Code?: string })?.Code,
+      region: (error as { region?: string })?.region,
+      requestId: (error as { requestId?: string })?.requestId,
+      extendedRequestId: (error as { extendedRequestId?: string })
+        ?.extendedRequestId,
+    });
+    throw new Error(
+      `Screenshot-Upload fehlgeschlagen: ${
+        (error as Error)?.message || 'Unknown error'
+      }`
+    );
   }
 }
 
@@ -124,7 +137,7 @@ export async function fixObjectPermissions(
 }
 
 export async function deleteFromLinode(objectKey: string): Promise<boolean> {
-  const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log';
+  const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log-img';
 
   try {
     const command = new DeleteObjectCommand({

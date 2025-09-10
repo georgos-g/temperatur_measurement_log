@@ -8,8 +8,7 @@ export async function POST() {
     await createTableIfNotExists();
 
     // Setup Linode bucket for public access
-    const bucketName =
-      process.env.LINODE_BUCKET_NAME || 'temperature-screenshots';
+    const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log-img';
     await ensureBucketPublicAccess(bucketName);
 
     return NextResponse.json({
@@ -31,8 +30,7 @@ export async function GET() {
     await createTableIfNotExists();
 
     // Setup Linode bucket for public access
-    const bucketName =
-      process.env.LINODE_BUCKET_NAME || 'temperature-screenshots';
+    const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log-img';
     await ensureBucketPublicAccess(bucketName);
 
     return NextResponse.json({
