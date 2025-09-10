@@ -21,7 +21,7 @@ export async function uploadToLinode(
   file: File,
   fileName: string
 ): Promise<string> {
-  const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log-img';
+  const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log';
 
   try {
     // Ensure bucket has public access policy
@@ -137,7 +137,7 @@ export async function fixObjectPermissions(
 }
 
 export async function deleteFromLinode(objectKey: string): Promise<boolean> {
-  const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log-img';
+  const bucketName = process.env.LINODE_BUCKET_NAME || 'temp-log';
 
   try {
     const command = new DeleteObjectCommand({

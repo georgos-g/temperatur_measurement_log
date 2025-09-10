@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'temp-log-img.eu-central-1.linodeobjects.com',
+        hostname: 'temp-log.eu-central-1.linodeobjects.com',
         port: '',
         pathname: '/**',
       },
