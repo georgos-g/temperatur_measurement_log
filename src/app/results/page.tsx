@@ -82,15 +82,29 @@ export default function ResultsPage() {
     );
 
     filtered.sort((a, b) => {
-      let aValue: string | number = a[sortField];
-      let bValue: string | number = b[sortField];
+      let aValue: string | number | Date = a[sortField];
+      let bValue: string | number | Date = b[sortField];
 
       if (sortField === 'temperature') {
         aValue = a.temperature;
         bValue = b.temperature;
-      }
-
-      if (typeof aValue === 'string') {
+      } else if (sortField === 'date') {
+        // Parse German date format (DD.MM.YYYY) for proper sorting
+        const parseGermanDate = (dateStr: string): Date => {
+          const [day, month, year] = dateStr.split('.');
+          return new Date(`${year}-${month}-${day}`);
+        };
+        aValue = parseGermanDate(a.date).getTime();
+        bValue = parseGermanDate(b.date).getTime();
+      } else if (sortField === 'time') {
+        // Convert time to comparable number (HH:MM:SS)
+        const timeToNumber = (timeStr: string): number => {
+          const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+          return hours * 3600 + minutes * 60 + (seconds || 0);
+        };
+        aValue = timeToNumber(a.time);
+        bValue = timeToNumber(b.time);
+      } else if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
         bValue = (bValue as string).toLowerCase();
       }

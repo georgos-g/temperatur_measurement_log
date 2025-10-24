@@ -21,7 +21,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+
+        // Restore cookie for server-side authentication
+        document.cookie = `user-session=${JSON.stringify(
+          userData
+        )}; path=/; max-age=86400; samesite=strict; secure=false`;
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('user');
@@ -51,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Cookie für serverseitige Authentifizierung setzen
       document.cookie = `user-session=${JSON.stringify(
         userData
-      )}; path=/; max-age=86400; samesite=strict`;
+      )}; path=/; max-age=86400; samesite=strict; secure=false`;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
