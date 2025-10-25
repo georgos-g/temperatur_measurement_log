@@ -48,7 +48,6 @@ export async function uploadToLinode(
 
     // Return the public URL
     const publicUrl = `https://${bucketName}.eu-central-1.linodeobjects.com/${objectKey}`;
-    console.log('Screenshot uploaded successfully:', publicUrl);
 
     return publicUrl;
   } catch (error) {
@@ -76,7 +75,6 @@ export async function ensureBucketPublicAccess(bucketName: string) {
     // Check current bucket policy
     try {
       await s3Client.send(new GetBucketPolicyCommand({ Bucket: bucketName }));
-      console.log('Bucket policy already exists');
     } catch (error: unknown) {
       // If no policy exists, create one
       const errorMessage =
@@ -105,7 +103,6 @@ export async function ensureBucketPublicAccess(bucketName: string) {
           })
         );
 
-        console.log('Bucket policy set to allow public read access');
       } else {
         throw error;
       }
@@ -128,7 +125,6 @@ export async function fixObjectPermissions(
     });
 
     await s3Client.send(command);
-    console.log(`Fixed permissions for ${objectKey}`);
     return true;
   } catch (error) {
     console.error(`Error fixing permissions for ${objectKey}:`, error);
@@ -146,7 +142,6 @@ export async function deleteFromLinode(objectKey: string): Promise<boolean> {
     });
 
     await s3Client.send(command);
-    console.log(`Deleted object: ${objectKey}`);
     return true;
   } catch (error) {
     console.error('Fehler beim Löschen von Linode:', error);

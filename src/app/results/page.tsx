@@ -57,9 +57,7 @@ export default function ResultsPage() {
       const response = await fetch('/api/temperature');
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched data:', data);
         setRecords(data.records || []);
-        console.log('Records set:', data.records || []);
       }
     } catch (error) {
       console.error('Error fetching records:', error);

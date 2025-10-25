@@ -48,7 +48,6 @@ export async function migrateTemperatureRecordsTable() {
     `;
 
     if (result.rows.length === 0) {
-      console.log('Adding user_id column to temperature_records table...');
 
       // Add user_id column
       await sql`
@@ -56,11 +55,7 @@ export async function migrateTemperatureRecordsTable() {
         ADD COLUMN user_id INTEGER REFERENCES users(id)
       `;
 
-      console.log(
-        'Successfully added user_id column to temperature_records table'
-      );
     } else {
-      console.log('user_id column already exists in temperature_records table');
     }
   } catch (error) {
     console.error('Error migrating temperature_records table:', error);
@@ -79,7 +74,6 @@ export async function migrateTemperatureRecordsLocation() {
     `;
 
     if (result.rows.length === 0) {
-      console.log('Adding location column to temperature_records table...');
 
       // Add location column
       await sql`
@@ -87,13 +81,7 @@ export async function migrateTemperatureRecordsLocation() {
         ADD COLUMN location VARCHAR(50) NOT NULL DEFAULT 'Küche'
       `;
 
-      console.log(
-        'Successfully added location column to temperature_records table'
-      );
     } else {
-      console.log(
-        'location column already exists in temperature_records table'
-      );
     }
   } catch (error) {
     console.error('Error migrating temperature_records location:', error);
@@ -106,7 +94,6 @@ export async function insertTemperatureRecord(
   userId: string
 ) {
   try {
-    console.log('Attempting to insert into Vercel Postgres...');
     const result = await sql`
       INSERT INTO temperature_records (temperature, date, time, location, screenshot_url, user_id)
       VALUES (${record.temperature}, ${record.date}, ${record.time}, ${
@@ -116,7 +103,6 @@ export async function insertTemperatureRecord(
     `;
 
     const newRecord = result.rows[0] as TemperatureRecord;
-    console.log('Record inserted into Vercel Postgres:', newRecord);
     return newRecord;
   } catch (error) {
     console.error(
@@ -126,7 +112,6 @@ export async function insertTemperatureRecord(
 
     // Fallback: save to localStorage for development
     try {
-      console.log('Falling back to localStorage...');
       const existing = localStorage?.getItem('temperature_records');
       const records = existing ? JSON.parse(existing) : [];
 
@@ -142,7 +127,6 @@ export async function insertTemperatureRecord(
 
       records.unshift(newRecord);
       localStorage?.setItem('temperature_records', JSON.stringify(records));
-      console.log('Record saved to localStorage:', newRecord);
       return newRecord;
     } catch (localStorageError) {
       console.error('localStorage fallback failed:', localStorageError);
@@ -153,13 +137,11 @@ export async function insertTemperatureRecord(
 
 export async function getAllTemperatureRecords(): Promise<TemperatureRecord[]> {
   try {
-    console.log('Attempting to fetch from Vercel Postgres...');
     const result = await sql`
       SELECT id, temperature, date, time, location, screenshot_url, created_at
       FROM temperature_records
       ORDER BY created_at DESC
     `;
-    console.log('Vercel Postgres query result:', result);
 
     const records = result.rows.map((row) => ({
       id: row.id.toString(),
@@ -171,7 +153,6 @@ export async function getAllTemperatureRecords(): Promise<TemperatureRecord[]> {
       createdAt: new Date(row.created_at),
     }));
 
-    console.log('Mapped records:', records);
     return records;
   } catch (error) {
     console.error(
@@ -181,11 +162,9 @@ export async function getAllTemperatureRecords(): Promise<TemperatureRecord[]> {
 
     // Fallback: try to get from localStorage for development
     try {
-      console.log('Trying fallback to localStorage...');
       const stored = localStorage?.getItem('temperature_records');
       if (stored) {
         const records = JSON.parse(stored);
-        console.log('Fallback records from localStorage:', records);
         return records;
       }
     } catch (localStorageError) {
@@ -193,7 +172,6 @@ export async function getAllTemperatureRecords(): Promise<TemperatureRecord[]> {
     }
 
     // If no fallback data, return empty array instead of throwing
-    console.log('No data available, returning empty array');
     return [];
   }
 }
@@ -202,14 +180,12 @@ export async function getTemperatureRecordsByUserId(
   userId: string
 ): Promise<TemperatureRecord[]> {
   try {
-    console.log('Attempting to fetch user records from Vercel Postgres...');
     const result = await sql`
       SELECT id, temperature, date, time, location, screenshot_url, created_at
       FROM temperature_records
       WHERE user_id = ${parseInt(userId)}
       ORDER BY created_at DESC
     `;
-    console.log('Vercel Postgres query result for user:', result);
 
     const records = result.rows.map((row) => ({
       id: row.id.toString(),
@@ -221,7 +197,6 @@ export async function getTemperatureRecordsByUserId(
       createdAt: new Date(row.created_at),
     }));
 
-    console.log('Mapped user records:', records);
     return records;
   } catch (error) {
     console.error(
@@ -230,7 +205,6 @@ export async function getTemperatureRecordsByUserId(
     );
 
     // For development, return empty array if database fails
-    console.log('Database error, returning empty array');
     return [];
   }
 }

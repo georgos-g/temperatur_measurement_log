@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
+import { compressImageForUpload } from '@/lib/image-processor';
 import { formatGermanDate, formatGermanTime } from '@/lib/utils';
 import { temperatureSchema, type TemperatureData } from '@/types/temperature';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -83,8 +84,16 @@ export function TemperatureForm() {
       formData.append('time', data.time);
       formData.append('location', data.location);
 
+      // Compress image before uploading
       if (data.screenshot) {
-        formData.append('screenshot', data.screenshot);
+        console.log(
+          `Original image size: ${(data.screenshot.size / 1024).toFixed(2)}KB`
+        );
+        const compressedFile = await compressImageForUpload(data.screenshot);
+        console.log(
+          `Compressed image size: ${(compressedFile.size / 1024).toFixed(2)}KB`
+        );
+        formData.append('screenshot', compressedFile);
       }
 
       const response = await fetch('/api/temperature', {

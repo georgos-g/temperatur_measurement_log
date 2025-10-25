@@ -88,13 +88,6 @@ export async function POST(request: NextRequest) {
       console.error('Error saving to localStorage:', error);
     }
 
-    console.log('Temperaturaufzeichnung gespeichert:', {
-      id: record.id,
-      temperature: record.temperature,
-      date: record.date,
-      time: record.time,
-      hasScreenshot: !!record.screenshotUrl,
-    });
 
     return NextResponse.json({
       success: true,

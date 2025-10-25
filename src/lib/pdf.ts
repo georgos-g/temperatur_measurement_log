@@ -2,8 +2,8 @@ import jsPDF from 'jspdf';
 import {
   ImageProcessingOptions,
   ProcessedImage,
-  processImagesBatch,
-} from './image-processor';
+  processImagesBatchFast,
+} from './image-processor-fast';
 
 type PDFRecord = {
   id: string;
@@ -39,12 +39,12 @@ export async function generateTemperaturePDF(
   pdf.text(`Erstellt am: ${currentDate}`, 20, userName ? 50 : 45);
 
   // Headers
-  pdf.setFontSize(14);
+  pdf.setFontSize(13);
   const headerY = userName ? 70 : 65;
   pdf.text('Datum', 20, headerY);
   pdf.text('Uhrzeit', 50, headerY);
-  pdf.text('Temp.(°C)', 80, headerY);
-  pdf.text('Standort', 110, headerY);
+  pdf.text('°C', 80, headerY);
+  pdf.text('Standort', 100, headerY);
   pdf.text('Screenshot', 160, headerY);
 
   // Draw line under headers
@@ -55,18 +55,18 @@ export async function generateTemperaturePDF(
   const imageUrls = recordsWithImages.map((record) => record.screenshotUrl!);
 
   const imageProcessingOptions: ImageProcessingOptions = {
-    maxWidth: 200, // Higher resolution for better quality
-    maxHeight: 112, // Higher resolution for better quality
-    quality: 1.0, // Maximum quality
+    maxWidth: 200, // Keep same dimensions for consistency
+    maxHeight: 100, // Keep same dimensions for consistency
+    // No quality setting - fast processing uses minimal compression
   };
 
-  console.log(`Processing ${imageUrls.length} images for PDF generation...`);
+  console.log(`Starting fast processing of ${imageUrls.length} images...`);
 
-  // Process images in batches to manage memory
-  const processedImages = await processImagesBatch(
+  // Process images with fast processing and higher concurrency
+  const processedImages = await processImagesBatchFast(
     imageUrls,
     imageProcessingOptions,
-    3
+    4 // Higher concurrency for speed
   );
 
   // Create a map of URL to processed image for easy lookup
@@ -74,8 +74,18 @@ export async function generateTemperaturePDF(
   recordsWithImages.forEach((record, index) => {
     if (processedImages[index]) {
       imageMap.set(record.screenshotUrl!, processedImages[index]);
+      console.log(`Fast processed image for record ${record.id}`);
+    } else {
+      console.warn(
+        `Fast processing failed for record ${record.id}: ${record.screenshotUrl}`
+      );
     }
   });
+
+  const successCount = imageMap.size;
+  console.log(
+    `Fast image processing complete: ${successCount}/${imageUrls.length} images processed successfully`
+  );
 
   // Records
   pdf.setFontSize(10);
@@ -95,7 +105,7 @@ export async function generateTemperaturePDF(
     pdf.text(record.date, 20, yPosition);
     pdf.text(record.time, 50, yPosition);
     pdf.text(record.temperature.toString(), 80, yPosition);
-    pdf.text(record.location, 110, yPosition);
+    pdf.text(record.location, 100, yPosition);
 
     // Handle screenshot
     if (record.screenshotUrl && imageMap.has(record.screenshotUrl)) {
@@ -107,27 +117,28 @@ export async function generateTemperaturePDF(
           pdf.addImage(
             processedImage.data,
             'JPEG',
-            155, // x position (below Screenshot column)
+            150, // x position (below Screenshot column)
             yPosition - 8, // y position (slightly above text for better alignment)
             processedImage.width * 0.3, // Optimized scale for high quality
             processedImage.height * 0.3 // Optimized scale for high quality
           );
-          console.log(
-            `Added image below Screenshot column for record ${record.id}`
-          );
         } catch (imageError) {
           console.error(
-            `Failed to add image for record ${record.id}:`,
+            `Failed to add image to PDF for record ${record.id}:`,
             imageError
           );
-          pdf.text('Fehler', 160, yPosition);
+          pdf.text('Bildfehler', 160, yPosition);
         }
       } else {
-        pdf.text('Fehler', 160, yPosition);
+        console.warn(`No processed image available for record ${record.id}`);
+        pdf.text('Verarbeitungsfehler', 160, yPosition);
       }
     } else if (record.screenshotUrl) {
       // Screenshot URL exists but image processing failed
-      pdf.text('Fehler', 160, yPosition);
+      console.warn(
+        `Image processing failed for record ${record.id}: ${record.screenshotUrl}`
+      );
+      pdf.text('Downloadfehler', 160, yPosition);
     } else {
       // No screenshot - show indicator in screenshot column
       pdf.text('-', 160, yPosition);
