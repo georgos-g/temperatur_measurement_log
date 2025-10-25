@@ -1,5 +1,6 @@
-import { requireAuthentication } from '@/lib/auth';
+import { authOptions } from '@/lib/auth';
 import { generateTemperaturePDF } from '@/lib/pdf';
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Import the temperature records from the temperature API
@@ -15,8 +16,16 @@ let temperatureRecords: Array<{
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user
-    const user = requireAuthentication(request);
+    // Get authenticated user from NextAuth session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
@@ -25,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch current records for the authenticated user only
     const { getTemperatureRecordsByUserId } = await import('@/lib/db');
-    const records = await getTemperatureRecordsByUserId(user.id);
+    const records = await getTemperatureRecordsByUserId(userId);
     temperatureRecords = records.map((record) => ({
       id: record.id,
       temperature: record.temperature,

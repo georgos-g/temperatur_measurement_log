@@ -1,3 +1,4 @@
+import { AuthSessionProvider } from '@/components/auth-session-provider';
 import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/lib/theme-context';
 import type { Metadata, Viewport } from 'next';
@@ -53,11 +54,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full bg-background text-foreground safe-area-padding`}
       >
-        <ThemeProvider defaultTheme='system' storageKey='temperature-app-theme'>
-          <AuthProvider>
-            <div className='min-h-screen flex flex-col'>{children}</div>
-          </AuthProvider>
-        </ThemeProvider>
+        <AuthSessionProvider>
+          <ThemeProvider
+            defaultTheme='system'
+            storageKey='temperature-app-theme'
+          >
+            <AuthProvider>
+              <div className='min-h-screen flex flex-col'>{children}</div>
+            </AuthProvider>
+          </ThemeProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   );

@@ -1,12 +1,36 @@
-import { requireAuthentication } from '@/lib/auth';
+import { authOptions } from '@/lib/auth';
 import { createTableIfNotExists, insertTemperatureRecord } from '@/lib/db';
 import { uploadToLinode } from '@/lib/s3';
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get authenticated user
-    const user = requireAuthentication(request);
+    // Try to get authenticated user from NextAuth session first
+    const session = await getServerSession(authOptions);
+    console.log('Session in POST:', session);
+
+    let userId: string;
+
+    if (session?.user?.id) {
+      userId = session.user.id;
+      console.log('Using NextAuth session, User ID:', userId);
+    } else {
+      // Fallback to old authentication method for backward compatibility
+      const userIdHeader = request.headers.get('x-user-id');
+      const userEmailHeader = request.headers.get('x-user-email');
+
+      if (!userIdHeader || !userEmailHeader) {
+        console.log('No session or headers found, returning 401');
+        return NextResponse.json(
+          { error: 'Authentication required' },
+          { status: 401 }
+        );
+      }
+
+      userId = userIdHeader;
+      console.log('Using header authentication, User ID:', userId);
+    }
 
     const formData = await request.formData();
 
@@ -49,8 +73,18 @@ export async function POST(request: NextRequest) {
 
     // Ensure database table exists
     await createTableIfNotExists();
+    console.log('Database tables ensured');
 
     // Create temperature record in database
+    console.log('Creating temperature record with data:', {
+      temperature,
+      date,
+      time,
+      location,
+      screenshotUrl,
+      userId,
+    });
+
     const record = await insertTemperatureRecord(
       {
         temperature,
@@ -59,8 +93,9 @@ export async function POST(request: NextRequest) {
         location,
         screenshotUrl,
       },
-      user.id
+      userId
     );
+    console.log('Temperature record created:', record);
 
     // Also save to localStorage as backup for development
     try {
@@ -88,7 +123,6 @@ export async function POST(request: NextRequest) {
       console.error('Error saving to localStorage:', error);
     }
 
-
     return NextResponse.json({
       success: true,
       record: {
@@ -111,15 +145,23 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user
-    const user = requireAuthentication(request);
+    // Get authenticated user from NextAuth session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
 
     // Ensure database table exists
     await createTableIfNotExists();
 
     // Get records for the authenticated user only
     const { getTemperatureRecordsByUserId } = await import('@/lib/db');
-    const records = await getTemperatureRecordsByUserId(user.id);
+    const records = await getTemperatureRecordsByUserId(userId);
 
     return NextResponse.json({
       success: true,

@@ -1,12 +1,21 @@
-import { requireAuthentication } from '@/lib/auth';
+import { authOptions } from '@/lib/auth';
 import { deleteFromLinode } from '@/lib/s3';
 import { sql } from '@vercel/postgres';
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Get authenticated user
-    const user = requireAuthentication(request);
+    // Get authenticated user from NextAuth session
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.user.id;
 
     const { recordId } = await request.json();
 
@@ -33,7 +42,7 @@ export async function DELETE(request: NextRequest) {
     const record = rows[0];
 
     // Check if the record belongs to the authenticated user
-    if (record.user_id !== parseInt(user.id)) {
+    if (record.user_id !== parseInt(userId)) {
       return NextResponse.json(
         {
           success: false,

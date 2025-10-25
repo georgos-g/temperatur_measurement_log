@@ -1,6 +1,7 @@
 import { TemperatureRecord } from '@/types/temperature';
 import { User } from '@/types/user';
 import { sql } from '@vercel/postgres';
+import { createNextAuthTables } from './nextauth-migration';
 
 export async function createTableIfNotExists() {
   try {
@@ -31,6 +32,9 @@ export async function createTableIfNotExists() {
     // Migration: Add user_id column to existing tables if it doesn't exist
     await migrateTemperatureRecordsTable();
     await migrateTemperatureRecordsLocation();
+
+    // Create NextAuth tables if they don't exist
+    await createNextAuthTables();
   } catch (error) {
     console.error('Error creating tables:', error);
     throw error;
@@ -48,13 +52,11 @@ export async function migrateTemperatureRecordsTable() {
     `;
 
     if (result.rows.length === 0) {
-
       // Add user_id column
       await sql`
         ALTER TABLE temperature_records
         ADD COLUMN user_id INTEGER REFERENCES users(id)
       `;
-
     } else {
     }
   } catch (error) {
@@ -74,13 +76,11 @@ export async function migrateTemperatureRecordsLocation() {
     `;
 
     if (result.rows.length === 0) {
-
       // Add location column
       await sql`
         ALTER TABLE temperature_records
         ADD COLUMN location VARCHAR(50) NOT NULL DEFAULT 'Küche'
       `;
-
     } else {
     }
   } catch (error) {

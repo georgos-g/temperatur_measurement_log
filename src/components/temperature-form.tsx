@@ -99,6 +99,7 @@ export function TemperatureForm() {
       const response = await fetch('/api/temperature', {
         method: 'POST',
         body: formData,
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -134,7 +135,9 @@ export function TemperatureForm() {
         ? `/api/pdf?userName=${encodeURIComponent(userName)}`
         : '/api/pdf';
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        credentials: 'include',
+      });
 
       if (!response.ok) {
         throw new Error('Fehler beim Erstellen der PDF');
