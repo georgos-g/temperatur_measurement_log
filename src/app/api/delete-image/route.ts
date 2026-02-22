@@ -1,26 +1,35 @@
 import { deleteFromLinode } from '@/lib/s3';
-import { auth } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import { sql } from '@vercel/postgres';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(request: NextRequest) {
   try {
     // Get authenticated user from Clerk
-    const { userId } = await auth();
+    const clerkUser = await currentUser();
 
-    if (!userId) {
+    if (!clerkUser) {
       return NextResponse.json(
         { error: 'Authentication required' },
-        { status: 401 }
+        { status: 401 },
       );
     }
+
+    const email = clerkUser.emailAddresses[0]?.emailAddress || '';
+    const name =
+      `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() ||
+      'User';
+
+    const { createOrGetUser } = await import('@/lib/db');
+    const dbUser = await createOrGetUser(name, email, 'clerk', clerkUser.id);
+    const dbUserId = dbUser.id;
 
     const { recordId } = await request.json();
 
     if (!recordId) {
       return NextResponse.json(
         { success: false, message: 'Record ID ist erforderlich' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -33,27 +42,27 @@ export async function DELETE(request: NextRequest) {
     if (rows.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Datensatz nicht gefunden' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     const record = rows[0];
 
     // Check if the record belongs to the authenticated user
-    if (record.user_id !== userId) {
+    if (record.user_id !== dbUserId) {
       return NextResponse.json(
         {
           success: false,
           message: 'Nicht autorisiert, dieses Bild zu löschen',
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     if (!record.screenshot_url) {
       return NextResponse.json(
         { success: false, message: 'Kein Screenshot zum Löschen vorhanden' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -70,7 +79,7 @@ export async function DELETE(request: NextRequest) {
           success: false,
           message: 'Fehler beim Löschen des Bildes von Linode',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -89,7 +98,7 @@ export async function DELETE(request: NextRequest) {
     console.error('Fehler beim Löschen des Screenshots:', error);
     return NextResponse.json(
       { success: false, message: 'Interner Serverfehler' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

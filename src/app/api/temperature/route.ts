@@ -29,8 +29,6 @@ export async function POST(request: NextRequest) {
     const dbUser = await createOrGetUser(name, email, 'clerk', clerkUser.id);
     const userId = dbUser.id; // The integer ID from Postgres
 
-    console.log('Using Clerk authentication, mapped to DB User ID:', userId);
-
     const formData = await request.formData();
 
     const temperature = parseFloat(formData.get('temperature') as string);
@@ -59,6 +57,23 @@ export async function POST(request: NextRequest) {
 
     // Upload screenshot if provided
     if (screenshot && screenshot.size > 0) {
+      // Validate MIME type
+      if (!screenshot.type.startsWith('image/')) {
+        return NextResponse.json(
+          { error: 'Nur Bilder sind als Screenshot erlaubt' },
+          { status: 400 },
+        );
+      }
+
+      // Validate file size (max 5MB)
+      const MAX_SIZE_MB = 5;
+      if (screenshot.size > MAX_SIZE_MB * 1024 * 1024) {
+        return NextResponse.json(
+          { error: `Das Bild darf maximal ${MAX_SIZE_MB}MB groß sein` },
+          { status: 400 },
+        );
+      }
+
       try {
         screenshotUrl = await uploadToLinode(
           screenshot,
@@ -72,17 +87,6 @@ export async function POST(request: NextRequest) {
 
     // Ensure database table exists
     await createTableIfNotExists();
-    console.log('Database tables ensured');
-
-    // Create temperature record in database
-    console.log('Creating temperature record with data:', {
-      temperature,
-      date,
-      time,
-      location,
-      screenshotUrl,
-      userId,
-    });
 
     const record = await insertTemperatureRecord(
       {
@@ -94,7 +98,6 @@ export async function POST(request: NextRequest) {
       },
       userId,
     );
-    console.log('Temperature record created:', record);
 
     return NextResponse.json({
       success: true,
@@ -116,7 +119,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     // Get authenticated user from Clerk
     const clerkUser = await currentUser();
