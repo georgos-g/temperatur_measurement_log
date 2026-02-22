@@ -146,3 +146,249 @@ input[type='number'] {
 .bg-card {
   background-color: hsl(var(--card));
 }
+
+/* ===== Premium Design Enhancements ===== */
+
+/* Gradient Background Utilities */
+.gradient-bg {
+  background: linear-gradient(
+    135deg,
+    hsl(220 60% 97%) 0%,
+    hsl(210 40% 96%) 50%,
+    hsl(200 50% 97%) 100%
+  );
+}
+
+.dark .gradient-bg {
+  background: linear-gradient(
+    135deg,
+    hsl(224 71% 4%) 0%,
+    hsl(220 60% 8%) 50%,
+    hsl(215 50% 6%) 100%
+  );
+}
+
+/* Primary Gradient */
+.gradient-primary {
+  background: linear-gradient(
+    135deg,
+    hsl(217 91% 60%) 0%,
+    hsl(199 89% 48%) 100%
+  );
+}
+
+/* Glass Morphism Card */
+.glass-card {
+  background: hsl(var(--card) / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.05),
+    0 2px 4px -2px hsl(0 0% 0% / 0.05), 0 0 0 1px hsl(var(--border) / 0.1);
+}
+
+.dark .glass-card {
+  background: hsl(var(--card) / 0.6);
+  border: 1px solid hsl(var(--border) / 0.3);
+  box-shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.2),
+    0 2px 4px -2px hsl(0 0% 0% / 0.15), 0 0 0 1px hsl(var(--primary) / 0.05);
+}
+
+/* Elevated Card with Multi-layer Shadow */
+.card-elevated {
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.03), 0 4px 8px hsl(0 0% 0% / 0.04),
+    0 12px 24px hsl(0 0% 0% / 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-elevated:hover {
+  box-shadow: 0 2px 4px hsl(0 0% 0% / 0.04), 0 8px 16px hsl(0 0% 0% / 0.06),
+    0 20px 40px hsl(0 0% 0% / 0.08);
+  transform: translateY(-2px);
+}
+
+.dark .card-elevated {
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 0.1), 0 4px 8px hsl(0 0% 0% / 0.15),
+    0 12px 24px hsl(0 0% 0% / 0.2);
+}
+
+.dark .card-elevated:hover {
+  box-shadow: 0 2px 4px hsl(0 0% 0% / 0.15), 0 8px 16px hsl(0 0% 0% / 0.2),
+    0 20px 40px hsl(0 0% 0% / 0.25);
+}
+
+/* Gradient Button */
+.btn-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(217 91% 60%) 0%,
+    hsl(199 89% 48%) 100%
+  );
+  color: white;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    hsl(217 91% 65%) 0%,
+    hsl(199 89% 55%) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-gradient:hover::before {
+  opacity: 1;
+}
+
+.btn-gradient:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px hsl(217 91% 60% / 0.3);
+}
+
+.btn-gradient:active {
+  transform: translateY(0);
+}
+
+/* Micro-animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 hsl(217 91% 60% / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 20px 5px hsl(217 91% 60% / 0.2);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Shimmer loading effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Interactive hover effects */
+.hover-lift {
+  transition: all 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+.hover-scale {
+  transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Smooth input focus */
+.input-glow:focus {
+  box-shadow: 0 0 0 3px hsl(217 91% 60% / 0.2);
+}
+
+/* Icon container with gradient background */
+.icon-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(217 91% 60% / 0.15) 0%,
+    hsl(199 89% 48% / 0.15) 100%
+  );
+}
+
+.dark .icon-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(217 91% 60% / 0.2) 0%,
+    hsl(199 89% 48% / 0.2) 100%
+  );
+}
+
+/* Decorative gradient orbs for backgrounds */
+.gradient-orb-1 {
+  position: fixed;
+  top: -20%;
+  right: -10%;
+  width: 40%;
+  height: 40%;
+  background: radial-gradient(
+    circle,
+    hsl(217 91% 60% / 0.08) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+.gradient-orb-2 {
+  position: fixed;
+  bottom: -20%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(
+    circle,
+    hsl(199 89% 48% / 0.06) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+.dark .gradient-orb-1 {
+  background: radial-gradient(
+    circle,
+    hsl(217 91% 60% / 0.05) 0%,
+    transparent 70%
+  );
+}
+
+.dark .gradient-orb-2 {
+  background: radial-gradient(
+    circle,
+    hsl(199 89% 48% / 0.04) 0%,
+    transparent 70%
+  );
+}

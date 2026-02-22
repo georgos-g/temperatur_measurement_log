@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/lib/auth-context';
 import { TemperatureRecord } from '@/types/temperature';
 import {
@@ -379,7 +380,7 @@ export default function ResultsPage() {
                     <span className='xs:hidden'>Zurück</span>
                   </Button>
                 </Link>
-                <div className='flex justify-end'>
+                <div className='flex items-center gap-3'>
                   <ThemeToggle />
                 </div>
               </div>
@@ -393,6 +394,7 @@ export default function ResultsPage() {
                 </p>
               </div>
             </div>
+            <UserProfile />
           </div>
 
           {/* Search and Filters */}

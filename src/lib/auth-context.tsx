@@ -1,12 +1,13 @@
 'use client';
 
 import { SessionUser } from '@/types/user';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { useAuth as useClerkAuth, useUser } from '@clerk/nextjs';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   user: SessionUser | null;
   login: (name: string, email: string) => Promise<void>;
+  loginWithProvider: (provider: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -14,44 +15,84 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
-  const [isLoading, setIsLoading] = useState(true);
+  const { isLoaded, isSignedIn, signOut } = useClerkAuth();
+  const { user: clerkUser } = useUser();
+  const [dbUser, setDbUser] = useState<SessionUser | null>(null);
+  const [isLoadingDbUser, setIsLoadingDbUser] = useState(false);
 
+  // Fetch database user when Clerk user is available
   useEffect(() => {
-    setIsLoading(status === 'loading');
-  }, [status]);
-
-  const login = async (name: string, email: string) => {
-    try {
-      const result = await signIn('credentials', {
-        name,
-        email,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        throw new Error('Login failed');
+    async function fetchDbUser() {
+      if (isSignedIn && clerkUser) {
+        setIsLoadingDbUser(true);
+        try {
+          const response = await fetch('/api/user');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.user) {
+              setDbUser({
+                id: data.user.id,
+                name: data.user.name,
+                email: data.user.email,
+              });
+            }
+          } else {
+            // Fallback to Clerk user data if API fails
+            setDbUser({
+              id: clerkUser.id,
+              name: clerkUser.fullName || clerkUser.firstName || '',
+              email: clerkUser.emailAddresses[0]?.emailAddress || '',
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching database user:', error);
+          // Fallback to Clerk user data
+          setDbUser({
+            id: clerkUser.id,
+            name: clerkUser.fullName || clerkUser.firstName || '',
+            email: clerkUser.emailAddresses[0]?.emailAddress || '',
+          });
+        } finally {
+          setIsLoadingDbUser(false);
+        }
+      } else {
+        setDbUser(null);
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
     }
+
+    if (isLoaded) {
+      fetchDbUser();
+    }
+  }, [isLoaded, isSignedIn, clerkUser]);
+
+  // Login function - with Clerk, this redirects to the Clerk sign-in page
+  const login = async (_name: string, _email: string) => {
+    // Clerk handles auth through its own UI/components
+    // This is kept for API compatibility but redirects to Clerk sign-in
+    window.location.href = '/sign-in';
+  };
+
+  // Provider login - redirects to Clerk with specific provider
+  const loginWithProvider = async (_provider: string) => {
+    // Clerk handles OAuth through its sign-in page
+    window.location.href = `/sign-in?redirect_url=/`;
   };
 
   const logout = () => {
-    signOut({ redirect: false });
+    setDbUser(null);
+    signOut({ redirectUrl: '/' });
   };
 
-  const user: SessionUser | null = session?.user
-    ? {
-        id: session.user.id,
-        name: session.user.name || '',
-        email: session.user.email || '',
-      }
-    : null;
-
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        user: dbUser,
+        login,
+        loginWithProvider,
+        logout,
+        isLoading: !isLoaded || isLoadingDbUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

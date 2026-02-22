@@ -1,12 +1,19 @@
-import { requireAuthentication } from '@/lib/auth';
 import { deleteFromLinode } from '@/lib/s3';
+import { auth } from '@clerk/nextjs/server';
 import { sql } from '@vercel/postgres';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Get authenticated user
-    const user = requireAuthentication(request);
+    // Get authenticated user from Clerk
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
 
     const { recordId } = await request.json();
 
@@ -33,7 +40,7 @@ export async function DELETE(request: NextRequest) {
     const record = rows[0];
 
     // Check if the record belongs to the authenticated user
-    if (record.user_id !== parseInt(user.id)) {
+    if (record.user_id !== userId) {
       return NextResponse.json(
         {
           success: false,

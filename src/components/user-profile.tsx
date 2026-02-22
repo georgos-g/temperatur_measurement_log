@@ -25,8 +25,8 @@ export function UserProfile() {
           <User className='w-4 h-4 text-blue-600' />
         </div>
         <div className='text-sm'>
-          <div className='font-medium text-gray-900_'>{user.name}</div>
-          <div className='text-gray-500_'>{user.email}</div>
+          <div className='font-medium text-foreground'>{user.name}</div>
+          <div className='text-muted-foreground'>{user.email}</div>
         </div>
       </div>
     </div>

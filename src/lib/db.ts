@@ -1,7 +1,6 @@
 import { TemperatureRecord } from '@/types/temperature';
 import { User } from '@/types/user';
 import { sql } from '@vercel/postgres';
-import { createNextAuthTables } from './nextauth-migration';
 
 export async function createTableIfNotExists() {
   try {
@@ -11,6 +10,8 @@ export async function createTableIfNotExists() {
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
+        provider VARCHAR(50) DEFAULT 'credentials',
+        provider_id VARCHAR(255),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -24,7 +25,7 @@ export async function createTableIfNotExists() {
         time VARCHAR(20) NOT NULL,
         location VARCHAR(50) NOT NULL,
         screenshot_url TEXT,
-        user_id INTEGER REFERENCES users(id),
+        user_id VARCHAR(255),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `;
@@ -32,9 +33,7 @@ export async function createTableIfNotExists() {
     // Migration: Add user_id column to existing tables if it doesn't exist
     await migrateTemperatureRecordsTable();
     await migrateTemperatureRecordsLocation();
-
-    // Create NextAuth tables if they don't exist
-    await createNextAuthTables();
+    await migrateUsersTable();
   } catch (error) {
     console.error('Error creating tables:', error);
     throw error;
@@ -45,19 +44,40 @@ export async function migrateTemperatureRecordsTable() {
   try {
     // Check if user_id column exists
     const result = await sql`
-      SELECT column_name
+      SELECT column_name, data_type
       FROM information_schema.columns
       WHERE table_name = 'temperature_records'
       AND column_name = 'user_id'
     `;
 
     if (result.rows.length === 0) {
-      // Add user_id column
+      // Add user_id column as VARCHAR for Clerk user IDs
       await sql`
         ALTER TABLE temperature_records
-        ADD COLUMN user_id INTEGER REFERENCES users(id)
+        ADD COLUMN user_id VARCHAR(255)
       `;
     } else {
+      // Check if column is INTEGER and needs migration to VARCHAR
+      const columnType = result.rows[0].data_type;
+      if (columnType === 'integer') {
+        console.log(
+          'Migrating user_id column from INTEGER to VARCHAR(255) for Clerk compatibility...',
+        );
+        // Drop the foreign key constraint if it exists, then alter the column type
+        try {
+          await sql`
+            ALTER TABLE temperature_records 
+            DROP CONSTRAINT IF EXISTS temperature_records_user_id_fkey
+          `;
+        } catch {
+          // Constraint might not exist, continue
+        }
+        await sql`
+          ALTER TABLE temperature_records
+          ALTER COLUMN user_id TYPE VARCHAR(255) USING user_id::VARCHAR
+        `;
+        console.log('Migration complete: user_id column is now VARCHAR(255)');
+      }
     }
   } catch (error) {
     console.error('Error migrating temperature_records table:', error);
@@ -89,16 +109,38 @@ export async function migrateTemperatureRecordsLocation() {
   }
 }
 
+export async function migrateUsersTable() {
+  try {
+    // Check if provider column exists
+    const result = await sql`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_name = 'users'
+      AND column_name = 'provider'
+    `;
+
+    if (result.rows.length === 0) {
+      await sql`
+        ALTER TABLE users
+        ADD COLUMN provider VARCHAR(50) DEFAULT 'credentials',
+        ADD COLUMN provider_id VARCHAR(255)
+      `;
+      console.log('Migration complete: Added provider, provider_id to users');
+    }
+  } catch (error) {
+    console.error('Error migrating users table:', error);
+    throw error;
+  }
+}
+
 export async function insertTemperatureRecord(
   record: Omit<TemperatureRecord, 'id' | 'createdAt'>,
-  userId: string
+  userId: string,
 ) {
   try {
     const result = await sql`
       INSERT INTO temperature_records (temperature, date, time, location, screenshot_url, user_id)
-      VALUES (${record.temperature}, ${record.date}, ${record.time}, ${
-      record.location
-    }, ${record.screenshotUrl}, ${parseInt(userId)})
+      VALUES (${record.temperature}, ${record.date}, ${record.time}, ${record.location}, ${record.screenshotUrl}, ${userId})
       RETURNING id, temperature, date, time, location, screenshot_url, created_at
     `;
 
@@ -107,7 +149,7 @@ export async function insertTemperatureRecord(
   } catch (error) {
     console.error(
       'Error inserting temperature record into Vercel Postgres:',
-      error
+      error,
     );
 
     // Fallback: save to localStorage for development
@@ -157,7 +199,7 @@ export async function getAllTemperatureRecords(): Promise<TemperatureRecord[]> {
   } catch (error) {
     console.error(
       'Error fetching temperature records from Vercel Postgres:',
-      error
+      error,
     );
 
     // Fallback: try to get from localStorage for development
@@ -177,13 +219,13 @@ export async function getAllTemperatureRecords(): Promise<TemperatureRecord[]> {
 }
 
 export async function getTemperatureRecordsByUserId(
-  userId: string
+  userId: string,
 ): Promise<TemperatureRecord[]> {
   try {
     const result = await sql`
       SELECT id, temperature, date, time, location, screenshot_url, created_at
       FROM temperature_records
-      WHERE user_id = ${parseInt(userId)}
+      WHERE user_id = ${userId}
       ORDER BY created_at DESC
     `;
 
@@ -201,7 +243,7 @@ export async function getTemperatureRecordsByUserId(
   } catch (error) {
     console.error(
       'Error fetching temperature records for user from Vercel Postgres:',
-      error
+      error,
     );
 
     // For development, return empty array if database fails
@@ -212,15 +254,29 @@ export async function getTemperatureRecordsByUserId(
 // User management functions
 export async function createOrGetUser(
   name: string,
-  email: string
+  email: string,
+  provider: string = 'credentials',
+  providerId?: string,
 ): Promise<User> {
   try {
-    // First try to find existing user
-    const existingUser = await sql`
-      SELECT id, name, email, created_at
-      FROM users
-      WHERE email = ${email}
-    `;
+    // First try to find existing user by email or provider ID
+    let existingUser;
+
+    if (providerId) {
+      // For OAuth providers, try to find by provider ID first
+      existingUser = await sql`
+        SELECT id, name, email, created_at
+        FROM users
+        WHERE (email = ${email} OR (provider = ${provider} AND provider_id = ${providerId}))
+      `;
+    } else {
+      // For credentials, find by email only
+      existingUser = await sql`
+        SELECT id, name, email, created_at
+        FROM users
+        WHERE email = ${email}
+      `;
+    }
 
     if (existingUser.rows.length > 0) {
       const row = existingUser.rows[0];
@@ -234,8 +290,8 @@ export async function createOrGetUser(
 
     // Create new user if not found
     const result = await sql`
-      INSERT INTO users (name, email)
-      VALUES (${name}, ${email})
+      INSERT INTO users (name, email, provider, provider_id)
+      VALUES (${name}, ${email}, ${provider}, ${providerId || null})
       RETURNING id, name, email, created_at
     `;
 
@@ -278,7 +334,7 @@ export async function getUserById(id: string): Promise<User | null> {
 }
 
 export async function getTemperatureRecordById(
-  id: string
+  id: string,
 ): Promise<TemperatureRecord | null> {
   try {
     const result = await sql`

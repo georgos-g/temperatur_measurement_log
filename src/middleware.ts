@@ -1,25 +1,25 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-export function middleware(request: NextRequest) {
-  // Only protect API routes that need authentication
-  if (request.nextUrl.pathname.startsWith('/api/')) {
-    // Allow auth routes, setup, and migration routes
-    if (
-      request.nextUrl.pathname.startsWith('/api/auth/') ||
-      request.nextUrl.pathname === '/api/setup' ||
-      request.nextUrl.pathname === '/api/migrate-nextauth'
-    ) {
-      return NextResponse.next();
-    }
+// Define public routes that don't require authentication
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/api/setup',
+]);
 
-    // For all other API routes, let them handle authentication internally
-    return NextResponse.next();
+export default clerkMiddleware(async (auth, request) => {
+  // Protect all routes except public ones
+  if (!isPublicRoute(request)) {
+    await auth.protect();
   }
-
-  return NextResponse.next();
-}
+});
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    // Skip Next.js internals and static files
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
+  ],
 };

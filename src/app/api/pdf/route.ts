@@ -1,41 +1,38 @@
-import { authOptions } from '@/lib/auth';
 import { generateTemperaturePDF } from '@/lib/pdf';
-import { getServerSession } from 'next-auth';
+import { currentUser } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
-
-// Import the temperature records from the temperature API
-// In a real app, this would come from a database
-let temperatureRecords: Array<{
-  id: string;
-  temperature: number;
-  date: string;
-  time: string;
-  location: string;
-  screenshotUrl?: string;
-}> = [];
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user from NextAuth session
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    // Get authenticated user from Clerk
+    const clerkUser = await currentUser();
+
+    if (!clerkUser) {
       return NextResponse.json(
         { error: 'Authentication required' },
-        { status: 401 }
+        { status: 401 },
       );
     }
-
-    const userId = session.user.id;
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const userName = searchParams.get('userName');
 
+    const email = clerkUser.emailAddresses[0]?.emailAddress || '';
+    const name =
+      `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() ||
+      'User';
+
+    // Map Clerk user to existing Postgres user
+    const { getTemperatureRecordsByUserId, createOrGetUser } =
+      await import('@/lib/db');
+    const dbUser = await createOrGetUser(name, email, 'clerk', clerkUser.id);
+    const userId = dbUser.id;
+
     // Fetch current records for the authenticated user only
-    const { getTemperatureRecordsByUserId } = await import('@/lib/db');
     const records = await getTemperatureRecordsByUserId(userId);
-    temperatureRecords = records.map((record) => ({
+    const temperatureRecords = records.map((record) => ({
       id: record.id,
       temperature: record.temperature,
       date: record.date,
@@ -62,14 +59,14 @@ export async function GET(request: NextRequest) {
           error:
             'Keine Temperaturaufzeichnungen für den angegebenen Zeitraum gefunden',
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Generate PDF with user name if provided
     const pdfBuffer = await generateTemperaturePDF(
       filteredRecords,
-      userName || undefined
+      userName || undefined,
     );
 
     // Return PDF as response
@@ -85,7 +82,7 @@ export async function GET(request: NextRequest) {
     console.error('Fehler beim Erstellen der PDF:', error);
     return NextResponse.json(
       { error: 'Fehler beim Erstellen der PDF' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

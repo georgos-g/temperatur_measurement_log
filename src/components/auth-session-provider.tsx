@@ -1,11 +1,23 @@
 'use client';
 
-import { SessionProvider } from 'next-auth/react';
+import { deDE } from '@clerk/localizations';
+import { ClerkProvider } from '@clerk/nextjs';
 
 export function AuthSessionProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  return (
+    <ClerkProvider
+      localization={deDE}
+      appearance={{
+        variables: {
+          colorPrimary: '#2563eb',
+        },
+      }}
+    >
+      {children}
+    </ClerkProvider>
+  );
 }

@@ -70,8 +70,19 @@ src/
 
 ### Authentication Endpoints
 
-#### POST `/api/auth/login`
-Authenticates a user and creates a session.
+#### OAuth Authentication
+The application now supports multiple authentication methods:
+
+1. **Google OAuth**: Users can sign in with their Google account
+2. **Apple Sign In**: Users can sign in with their Apple ID
+3. **Email/Name**: Traditional credentials-based authentication
+
+#### OAuth Callbacks
+- `/api/auth/callback/google` - Google OAuth callback
+- `/api/auth/callback/apple` - Apple Sign In callback
+
+#### POST `/api/auth/login` (Legacy)
+Authenticates a user with email and name (legacy method).
 
 **Request Body:**
 ```typescript
@@ -87,6 +98,31 @@ Authenticates a user and creates a session.
   id: string;
   name: string;
   email: string;
+}
+```
+
+#### GET `/api/auth/session`
+Retrieves current session information.
+
+**Response:**
+```typescript
+{
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  expires: string;
+}
+```
+
+#### POST `/api/auth/signout`
+Signs out the current user and clears the session.
+
+**Response:**
+```typescript
+{
+  success: boolean;
 }
 ```
 
@@ -487,17 +523,43 @@ POSTGRES_DATABASE=your_postgres_database
 
 # Next.js Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# NextAuth Configuration
+NEXTAUTH_SECRET=your_nextauth_secret_here_at_least_32_characters_long
+
+# OAuth Providers - Google
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+
+# OAuth Providers - Apple
+APPLE_CLIENT_ID=your_apple_client_id_here
+APPLE_CLIENT_SECRET=your_apple_client_secret_here
 ```
 
 ## Usage Patterns
 
 ### Authentication Flow
+
+#### OAuth Authentication (Google/Apple)
+1. User clicks "Sign in with Google/Apple" button
+2. Redirected to OAuth provider's authentication page
+3. User authenticates with provider
+4. Provider redirects to callback URL with authorization code
+5. NextAuth exchanges code for access token and user profile
+6. User account created/retrieved in database
+7. Session established with JWT token
+
+#### Traditional Authentication (Email/Name)
 1. User enters name and email in LoginForm
-2. Credentials sent to `/api/auth/login`
+2. Credentials sent to NextAuth credentials provider
 3. Server creates/retrieves user and returns user data
-4. Client stores user data in localStorage and cookie
-5. Middleware intercepts API requests and adds user headers
-6. Protected routes validate authentication
+4. Session established with JWT token
+
+#### Session Management
+1. JWT token stored in secure HTTP-only cookie
+2. Session valid for 30 days with automatic refresh
+3. Middleware intercepts API requests and validates session
+4. Protected routes require valid authentication
 
 ### Temperature Recording Flow
 1. User fills temperature form with automatic timestamp

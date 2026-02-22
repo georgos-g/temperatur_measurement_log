@@ -42,6 +42,13 @@ next-env.d.ts
 
 .cursor/
 .cursorrules/
-.playwright-mcp/*
+.playwright-mcp
 contex/*
 CLAUDE.md
+# .agent/
+
+# clerk configuration (can include secrets)
+/.clerk/
+antigravity.md
+memory-bank/
+

@@ -1,15 +1,23 @@
-import { requireAuthentication } from '@/lib/auth';
 import { getTemperatureRecordsByUserId } from '@/lib/db';
 import { downloadAndResizeImage } from '@/lib/image-processor';
+import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
   try {
-    // Get authenticated user
-    const user = requireAuthentication(request);
+    // Get authenticated user from Clerk
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
 
     // Fetch user's records
-    const records = await getTemperatureRecordsByUserId(user.id);
+    const records = await getTemperatureRecordsByUserId(userId);
 
     // Filter records with screenshots
     const recordsWithImages = records.filter((record) => record.screenshotUrl);
