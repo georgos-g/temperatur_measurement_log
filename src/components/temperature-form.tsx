@@ -2,13 +2,7 @@
 
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +18,7 @@ import { Camera, Download, List, Thermometer, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { TemperatureChart } from './temperature-chart';
 import { UserProfile } from './user-profile';
 
 // Native HTML5 Canvas Image Compression
@@ -79,8 +74,10 @@ export function TemperatureForm() {
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [chartData, setChartData] = useState<
+    { created_at: string; temperature: number }[]
+  >([]);
 
   const {
     register,
@@ -100,6 +97,44 @@ export function TemperatureForm() {
     setValue('time', formatGermanTime(now));
   }, [setValue]);
 
+  // Fetch historical data for chart
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        const response = await fetch('/api/temperature');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.records) {
+            // Filter to last 90 days (3 months)
+            const ninetyDaysAgo = new Date();
+            ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+            // Map the data to what the chart expects
+            // Combine German date (DD.MM.YYYY) and time -> ISO string for accurate sorting
+            const mappedData = result.records
+              .map((r: { date: string; time: string; temperature: number }) => {
+                const [day, month, year] = r.date.split('.');
+                const dateObj = new Date(`${year}-${month}-${day}T${r.time}`);
+                return {
+                  created_at: dateObj.toISOString(),
+                  temperature: r.temperature,
+                };
+              })
+              .filter(
+                (r: { created_at: string; temperature: number }) =>
+                  new Date(r.created_at) >= ninetyDaysAgo,
+              );
+
+            setChartData(mappedData);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch chart data:', e);
+      }
+    }
+    fetchHistory();
+  }, []);
+
   // Update date and time every second
   useEffect(() => {
     if (!currentDateTime) return; // Don't start interval until initial time is set
@@ -117,7 +152,6 @@ export function TemperatureForm() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
-      setSelectedFile(file);
       setValue('screenshot', file);
 
       // Create preview
@@ -164,7 +198,6 @@ export function TemperatureForm() {
 
       // Reset form
       reset();
-      setSelectedFile(null);
       setPreviewUrl(null);
 
       alert('Temperaturdaten erfolgreich gespeichert!');
@@ -254,94 +287,84 @@ export function TemperatureForm() {
       {/* Decorative gradient orbs */}
       <div className='gradient-orb-1' />
       <div className='gradient-orb-2' />
-      <Card className='glass-card card-elevated'>
-        <CardHeader className='text-center relative'>
+
+      <Card className='glass-card card-elevated border-white/20 bg-white/70 backdrop-blur-xl dark:bg-black/50'>
+        <CardHeader className='pb-0 pt-4 px-4 flex flex-row items-center justify-between'>
           <UserProfile />
-          <div className='absolute top-4 right-4'>
-            <ThemeToggle />
-          </div>
-          <div className='mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full icon-gradient animate-float'>
-            <Thermometer className='h-6 w-6 text-primary' />
-          </div>
-          <CardTitle>Temperatur Logger</CardTitle>
-          <CardDescription>
-            Temperaturmessungen mit automatischem Zeitstempel aufzeichnen
-          </CardDescription>
+          <ThemeToggle />
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className='space-y-6'>
-            {/* Temperature Input */}
-            <div className='space-y-2'>
-              <label htmlFor='temperature' className='text-sm font-medium'>
-                Temperatur (°C)
-              </label>
-              <Input
-                id='temperature'
-                type='number'
-                step='0.1'
-                placeholder='Temperatur eingeben'
-                {...register('temperature', { valueAsNumber: true })}
-                className='text-center text-lg'
-              />
-              {errors.temperature && (
-                <p className='text-sm text-destructive'>
-                  {errors.temperature.message}
-                </p>
-              )}
-            </div>
 
-            {/* Location Select */}
-            <div className='space-y-2'>
-              <label htmlFor='location' className='text-sm font-medium'>
-                Standort
-              </label>
-              <Select
-                id='location'
-                {...register('location')}
-                defaultValue='Küche'
-              >
-                <option value='Küche'>Küche</option>
-                <option value='Gäste WC'>Gäste WC</option>
-                <option value='Bad Waschbecken'>Bad Waschbecken</option>
-                <option value='Bad-Badewanne/Dusche'>
-                  Bad Badewanne/Dusche
-                </option>
-              </Select>
-              {errors.location && (
-                <p className='text-sm text-destructive'>
-                  {errors.location.message}
-                </p>
-              )}
-            </div>
-
-            <div className='flex justify-between gap-2'>
-              {/* Date Display */}
-              <div className='space-y-2 w-full'>
-                <label className='text-sm font-medium'>Datum</label>
-                <div className='rounded-md border bg-muted px-3 py-2 text-sm'>
-                  {currentDateTime
-                    ? formatGermanDate(currentDateTime)
-                    : '--.--.----'}
-                </div>
+        <CardContent className='pt-2 px-4 space-y-4'>
+          {chartData.length > 0 && (
+            <div className='mb-2'>
+              <div className='flex items-center gap-2 mb-1'>
+                <Thermometer className='h-4 w-4 text-primary' />
+                <span className='text-sm font-semibold'>3-Monate Verlauf</span>
               </div>
+              <TemperatureChart data={chartData} />
+            </div>
+          )}
 
-              {/* Time Display */}
-              <div className='space-y-2 w-full'>
-                <label className='text-sm font-medium'>Uhrzeit</label>
-                <div className='rounded-md border bg-muted px-3 py-2 text-sm font-mono'>
-                  {currentDateTime
-                    ? formatGermanTime(currentDateTime)
-                    : '--:--:--'}
-                </div>
+          <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
+            {/* Location & Temp Grid */}
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='space-y-1'>
+                <label className='text-xs font-medium text-muted-foreground'>
+                  Standort
+                </label>
+                <Select
+                  id='location'
+                  {...register('location')}
+                  defaultValue='Küche'
+                  className='h-10'
+                >
+                  <option value='Küche'>Küche</option>
+                  <option value='Gäste WC'>Gäste WC</option>
+                  <option value='Bad Waschbecken'>Bad Waschbecken</option>
+                  <option value='Bad-Badewanne/Dusche'>Bad BW/Dusche</option>
+                </Select>
+                {errors.location && (
+                  <p className='text-xs text-destructive'>
+                    {errors.location.message}
+                  </p>
+                )}
+              </div>
+              <div className='space-y-1'>
+                <label className='text-xs font-medium text-muted-foreground'>
+                  Temperatur (°C)
+                </label>
+                <Input
+                  id='temperature'
+                  type='number'
+                  step='0.1'
+                  placeholder='0.0'
+                  {...register('temperature', { valueAsNumber: true })}
+                  className='text-center text-lg h-10 font-bold'
+                />
+                {errors.temperature && (
+                  <p className='text-xs text-destructive'>
+                    {errors.temperature.message}
+                  </p>
+                )}
               </div>
             </div>
+            {/* Date/Time subtle text */}
+            <div className='flex justify-between items-center text-xs text-muted-foreground bg-muted/30 px-3 py-2 rounded-md'>
+              <span>
+                {currentDateTime
+                  ? formatGermanDate(currentDateTime)
+                  : '--.--.----'}
+              </span>
+              <span className='font-mono'>
+                {currentDateTime
+                  ? formatGermanTime(currentDateTime)
+                  : '--:--:--'}
+              </span>
+            </div>
 
-            {/* Screenshot Upload */}
-            <div className='space-y-2'>
-              <label className='text-sm font-medium'>
-                Screenshot (Optional)
-              </label>
-              <div className='space-y-3'>
+            {/* Actions: Save + Screenshot Grid */}
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='relative'>
                 <input
                   type='file'
                   accept='image/*'
@@ -349,53 +372,46 @@ export function TemperatureForm() {
                   className='hidden'
                   id='screenshot'
                 />
-                <label htmlFor='screenshot'>
-                  <div className='flex items-center justify-center w-full h-24 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-primary/50 transition-colors'>
+                <label htmlFor='screenshot' className='block h-full'>
+                  <div
+                    className={`flex items-center justify-center w-full h-12 border border-input bg-background rounded-md cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors shadow-sm text-sm font-medium ${previewUrl ? 'border-primary' : ''}`}
+                  >
                     {previewUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={previewUrl}
                         alt='Preview'
-                        className='h-full w-full object-cover rounded-lg'
+                        className='h-full w-full object-cover rounded-md opacity-50'
                       />
                     ) : (
-                      <div className='flex flex-col items-center text-muted-foreground'>
-                        <Camera className='h-8 w-8 mb-2' />
-                        <span className='text-sm'>Screenshot hinzufügen</span>
-                      </div>
+                      <>
+                        <Camera className='mr-2 h-4 w-4 text-muted-foreground' />
+                        Screenshot
+                      </>
                     )}
                   </div>
                 </label>
-                {selectedFile && (
-                  <p className='text-xs text-muted-foreground text-center'>
-                    {selectedFile.name}
-                  </p>
-                )}
               </div>
+
+              <Button
+                type='submit'
+                className='w-full h-12 btn-gradient text-base shadow-sm'
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />{' '}
+                    Speichere...
+                  </>
+                ) : (
+                  <>
+                    <Upload className='mr-2 h-4 w-4' /> Speichern
+                  </>
+                )}
+              </Button>
             </div>
 
-            {/* Submit Button */}
-            <Button
-              type='submit'
-              className='w-full btn-gradient'
-              disabled={isSubmitting}
-              size='lg'
-            >
-              {isSubmitting ? (
-                <>
-                  <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent' />
-                  Speichere...
-                </>
-              ) : (
-                <>
-                  <Upload className='mr-2 h-4 w-4' />
-                  Temperatur speichern
-                </>
-              )}
-            </Button>
-
-            {/* Action Buttons */}
-            <div className='grid grid-cols-2 gap-3 mb-3'>
+            <div className='grid grid-cols-2 gap-3 pt-2 border-t border-border/50'>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -456,7 +472,7 @@ export function TemperatureForm() {
                     className='w-full h-10'
                   >
                     <List className='mr-2 h-4 w-4' />
-                    Zeige Ergebnisse
+                    Ergebnisse
                   </Button>
                 </Link>
               </div>
